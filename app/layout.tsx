@@ -8,8 +8,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Image Processing API Frontend",
-  description: "A slick frontend for the sudo-saidso/bar API",
+  title: "BG BYE BYE",
+  description: "A frontend tool ffor removing image backgrounds",
     generator: 'v0.dev'
 }
 
