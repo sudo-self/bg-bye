@@ -16,8 +16,8 @@ export default function Home() {
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">BG Removal Tool</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">Remove backgrounds from images using AI</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">BG BYE BYE</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">bg-bye-bye.vercel.app</p>
           </div>
           <Button
             variant="ghost"
