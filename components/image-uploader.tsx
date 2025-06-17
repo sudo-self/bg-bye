@@ -317,6 +317,165 @@ export function ImageUploader() {
           >
             Download PNG with Transparent Background
           </Button>
+          <Button
+            variant="secondary"
+            className="w-full mt-2"
+            onClick={async () => {
+              try {
+                const response = await fetch(outputImage)
+                const blob = await response.blob()
+
+                // Convert blob to base64
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const base64 = reader.result as string
+
+                  // Create HTML content with embedded base64 image
+                  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Removed Image</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .bg-removed-image {
+            max-width: 100%;
+            height: auto;
+            border: 2px dashed #ccc;
+            padding: 10px;
+            background-image: 
+                linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .download-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .download-btn:hover {
+            background: #0056b3;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        p {
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Background Removed Successfully!</h1>
+        <p>Your image has been processed and the background has been removed. The checkerboard pattern shows the transparent areas.</p>
+        
+        <div class="image-container">
+            <img src="${base64}" alt="Background Removed Image" class="bg-removed-image" id="processedImage">
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="download-btn" onclick="downloadImage()">💾 Download PNG</button>
+            <button class="download-btn" onclick="copyToClipboard()">📋 Copy Image</button>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+            <h3>💡 Tips:</h3>
+            <ul style="text-align: left; color: #666;">
+                <li>Right-click the image and select "Save image as..." to download</li>
+                <li>The transparent background will work in most image editors</li>
+                <li>Use this image for overlays, logos, or design projects</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.href = '${base64}';
+            link.download = 'background-removed-' + new Date().getTime() + '.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        async function copyToClipboard() {
+            try {
+                const response = await fetch('${base64}');
+                const blob = await response.blob();
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                alert('✅ Image copied to clipboard!');
+            } catch (err) {
+                alert('❌ Failed to copy image to clipboard');
+            }
+        }
+    </script>
+</body>
+</html>`
+
+                  // Create and download HTML file
+                  const htmlBlob = new Blob([htmlContent], { type: "text/html" })
+                  const url = window.URL.createObjectURL(htmlBlob)
+                  const link = document.createElement("a")
+                  link.href = url
+                  link.download = "background-removed-image.html"
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                  window.URL.revokeObjectURL(url)
+
+                  toast({
+                    title: "HTML File Downloaded!",
+                    description: "Open the HTML file in your browser to view and download your image",
+                  })
+                }
+                reader.readAsDataURL(blob)
+              } catch (error) {
+                console.error("HTML download failed:", error)
+                toast({
+                  title: "HTML download failed",
+                  description: "Could not create HTML file. Please try the regular download.",
+                  variant: "destructive",
+                })
+              }
+            }}
+          >
+            📄 Download as HTML Page
+          </Button>
         </Card>
       )}
     </div>
