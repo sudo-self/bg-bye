@@ -12,7 +12,6 @@ export function TextInput() {
   const [isLoading, setIsLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
   const [outputImage, setOutputImage] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string>("")
   const { toast } = useToast()
 
   const processImageUrl = async () => {
@@ -26,7 +25,6 @@ export function TextInput() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Processing image from URL...")
 
     try {
       const response = await fetch("/api/process-url", {
@@ -40,35 +38,26 @@ export function TextInput() {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to process image URL")
+        throw new Error(result.details || result.error || "Failed to process image URL")
       }
 
-      setDebugInfo(`API Response: ${JSON.stringify(result.data, null, 2)}`)
-
-      // Handle the nested array response structure
+      // Handle the response structure - /text endpoint also returns (processed_image, origin)
       let processedImageUrl = null
 
       if (result.data && result.data.data && Array.isArray(result.data.data) && result.data.data.length > 0) {
         const imageArray = result.data.data[0]
 
         if (Array.isArray(imageArray) && imageArray.length > 0) {
-          // Try to get the background-removed image - usually the last one
-          for (let i = imageArray.length - 1; i >= 0; i--) {
-            const imageData = imageArray[i]
-            if (imageData && typeof imageData === "object") {
-              const imageUrl = imageData.url || imageData.path
-              if (imageUrl) {
-                processedImageUrl = imageUrl
-                break
-              }
-            }
+          // Get the FIRST image (index 0) which is the processed image with background removed
+          const processedImageData = imageArray[0]
+          if (processedImageData && typeof processedImageData === "object") {
+            processedImageUrl = processedImageData.url || processedImageData.path
           }
         }
       }
 
       if (processedImageUrl) {
         setOutputImage(processedImageUrl)
-        setDebugInfo(`Success! Background removed. Image URL: ${processedImageUrl}`)
 
         toast({
           title: "Background Removed!",
@@ -80,7 +69,6 @@ export function TextInput() {
     } catch (error) {
       console.error("Error processing image URL:", error)
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
-      setDebugInfo(`Error: ${errorMessage}`)
 
       toast({
         title: "Background removal failed",
@@ -142,13 +130,6 @@ export function TextInput() {
         </Card>
       )}
 
-      {debugInfo && (
-        <Card className="p-4 bg-slate-50 dark:bg-slate-900">
-          <h4 className="text-sm font-medium mb-2">Debug Info:</h4>
-          <pre className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{debugInfo}</pre>
-        </Card>
-      )}
-
       {outputImage && (
         <Card className="p-4">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
@@ -170,13 +151,26 @@ export function TextInput() {
           <Button
             variant="outline"
             className="mt-4 w-full"
-            onClick={() => {
-              const link = document.createElement("a")
-              link.href = outputImage
-              link.download = "background-removed.png"
-              document.body.appendChild(link)
-              link.click()
-              document.body.removeChild(link)
+            onClick={async () => {
+              try {
+                const response = await fetch(outputImage)
+                const blob = await response.blob()
+                const url = window.URL.createObjectURL(blob)
+                const link = document.createElement("a")
+                link.href = url
+                link.download = "background-removed.png"
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                window.URL.revokeObjectURL(url)
+              } catch (error) {
+                console.error("Download failed:", error)
+                toast({
+                  title: "Download failed",
+                  description: "Could not download the image. Please try right-clicking and saving.",
+                  variant: "destructive",
+                })
+              }
             }}
           >
             Download PNG with Transparent Background

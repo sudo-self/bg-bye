@@ -14,7 +14,6 @@ export function PngProcessor() {
   const [inputImage, setInputImage] = useState<File | null>(null)
   const [inputPreview, setInputPreview] = useState<string | null>(null)
   const [outputFile, setOutputFile] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string>("")
   const { toast } = useToast()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,7 +26,6 @@ export function PngProcessor() {
       }
       reader.readAsDataURL(file)
       setOutputFile(null)
-      setDebugInfo("")
     }
   }
 
@@ -42,7 +40,6 @@ export function PngProcessor() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Processing PNG file...")
 
     try {
       const formData = new FormData()
@@ -57,54 +54,31 @@ export function PngProcessor() {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to process PNG")
+        throw new Error(result.details || result.error || "Failed to process PNG")
       }
 
-      setDebugInfo(`API Response: ${JSON.stringify(result.data, null, 2)}`)
-
-      // Handle the response structure - PNG endpoint might return a file directly
+      // Handle the response structure - PNG endpoint returns a file path string
       let processedFileUrl = null
 
       if (result.data && result.data.data) {
-        // Check if data is an array
-        if (Array.isArray(result.data.data) && result.data.data.length > 0) {
+        // The /png endpoint returns a string file path, not an array
+        if (typeof result.data.data === "string") {
+          // Convert the file path to a proper URL
+          processedFileUrl = `https://sudo-saidso-bar.hf.space/gradio_api/file=${result.data.data}`
+        }
+        // Fallback: check if it's an array with file objects
+        else if (Array.isArray(result.data.data) && result.data.data.length > 0) {
           const firstItem = result.data.data[0]
-
-          // Case 1: Direct file object
           if (firstItem && typeof firstItem === "object" && firstItem.url) {
             processedFileUrl = firstItem.url
-          }
-          // Case 2: Path property
-          else if (firstItem && typeof firstItem === "object" && firstItem.path) {
+          } else if (firstItem && typeof firstItem === "object" && firstItem.path) {
             processedFileUrl = firstItem.path
           }
-          // Case 3: Direct URL string
-          else if (typeof firstItem === "string") {
-            processedFileUrl = firstItem
-          }
-          // Case 4: Nested array like other endpoints
-          else if (Array.isArray(firstItem) && firstItem.length > 0) {
-            const nestedItem = firstItem.length > 1 ? firstItem[1] : firstItem[0]
-            if (nestedItem && typeof nestedItem === "object") {
-              if (nestedItem.url) {
-                processedFileUrl = nestedItem.url
-              } else if (nestedItem.path) {
-                processedFileUrl = nestedItem.path
-              }
-            }
-          }
-        }
-        // Check if data is directly a file object
-        else if (result.data.data && typeof result.data.data === "object" && result.data.data.url) {
-          processedFileUrl = result.data.data.url
-        } else if (result.data.data && typeof result.data.data === "object" && result.data.data.path) {
-          processedFileUrl = result.data.data.path
         }
       }
 
       if (processedFileUrl) {
         setOutputFile(processedFileUrl)
-        setDebugInfo(`Success! PNG file created. File URL: ${processedFileUrl}`)
 
         toast({
           title: "PNG Created!",
@@ -116,7 +90,6 @@ export function PngProcessor() {
     } catch (error) {
       console.error("Error processing PNG:", error)
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
-      setDebugInfo(`Error: ${errorMessage}`)
 
       toast({
         title: "PNG processing failed",
@@ -173,7 +146,6 @@ export function PngProcessor() {
                   setInputImage(null)
                   setInputPreview(null)
                   setOutputFile(null)
-                  setDebugInfo("")
                 }}
                 disabled={isLoading}
               >
@@ -197,13 +169,6 @@ export function PngProcessor() {
           "Process to PNG"
         )}
       </Button>
-
-      {debugInfo && (
-        <Card className="p-4 bg-slate-50 dark:bg-slate-900">
-          <h4 className="text-sm font-medium mb-2">Debug Info:</h4>
-          <pre className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{debugInfo}</pre>
-        </Card>
-      )}
 
       {outputFile && (
         <Card className="p-6 mt-8">
@@ -231,13 +196,26 @@ export function PngProcessor() {
 
           <Button
             className="w-full"
-            onClick={() => {
-              const link = document.createElement("a")
-              link.href = outputFile
-              link.download = "processed-image.png"
-              document.body.appendChild(link)
-              link.click()
-              document.body.removeChild(link)
+            onClick={async () => {
+              try {
+                const response = await fetch(outputFile)
+                const blob = await response.blob()
+                const url = window.URL.createObjectURL(blob)
+                const link = document.createElement("a")
+                link.href = url
+                link.download = "processed-image.png"
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                window.URL.revokeObjectURL(url)
+              } catch (error) {
+                console.error("Download failed:", error)
+                toast({
+                  title: "Download failed",
+                  description: "Could not download the image. Please try right-clicking and saving.",
+                  variant: "destructive",
+                })
+              }
             }}
           >
             <DownloadIcon className="mr-2 h-4 w-4" />

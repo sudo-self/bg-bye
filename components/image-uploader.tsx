@@ -14,7 +14,6 @@ export function ImageUploader() {
   const [inputImage, setInputImage] = useState<File | null>(null)
   const [inputPreview, setInputPreview] = useState<string | null>(null)
   const [outputImage, setOutputImage] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string>("")
   const { toast } = useToast()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,7 +26,6 @@ export function ImageUploader() {
       }
       reader.readAsDataURL(file)
       setOutputImage(null)
-      setDebugInfo("")
     }
   }
 
@@ -42,22 +40,11 @@ export function ImageUploader() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Processing image...")
 
     try {
-      // Create FormData and log it for debugging
       const formData = new FormData()
       formData.append("image", inputImage)
       formData.append("endpoint", "/image")
-
-      console.log("Sending FormData:", {
-        imageExists: !!inputImage,
-        imageName: inputImage.name,
-        imageSize: inputImage.size,
-        imageType: inputImage.type,
-      })
-
-      setDebugInfo(`Sending image: ${inputImage.name} (${inputImage.size} bytes)`)
 
       const response = await fetch("/api/process-image", {
         method: "POST",
@@ -70,37 +57,24 @@ export function ImageUploader() {
         throw new Error(result.details || result.error || "Failed to process image")
       }
 
-      setDebugInfo(`API Response: ${JSON.stringify(result.data, null, 2)}`)
-
-      // Handle the nested array response structure
+      // Handle the response structure based on the Gradio app code
+      // The /image endpoint returns (processed_image, origin) - we want the first one (processed_image)
       let processedImageUrl = null
 
       if (result.data && result.data.data && Array.isArray(result.data.data) && result.data.data.length > 0) {
         const imageArray = result.data.data[0]
 
         if (Array.isArray(imageArray) && imageArray.length > 0) {
-          // Log all available images for debugging
-          setDebugInfo(
-            `Found ${imageArray.length} images in response:\n${imageArray.map((img, i) => `Image ${i}: ${img.url || img.path || "no url"}`).join("\n")}\n\nFull response: ${JSON.stringify(result.data, null, 2)}`,
-          )
-
-          // Try to get the background-removed image - usually the last one
-          for (let i = imageArray.length - 1; i >= 0; i--) {
-            const imageData = imageArray[i]
-            if (imageData && typeof imageData === "object") {
-              const imageUrl = imageData.url || imageData.path
-              if (imageUrl) {
-                processedImageUrl = imageUrl
-                break
-              }
-            }
+          // Get the FIRST image (index 0) which is the processed image with background removed
+          const processedImageData = imageArray[0]
+          if (processedImageData && typeof processedImageData === "object") {
+            processedImageUrl = processedImageData.url || processedImageData.path
           }
         }
       }
 
       if (processedImageUrl) {
         setOutputImage(processedImageUrl)
-        setDebugInfo(`Success! Background removed. Image URL: ${processedImageUrl}`)
 
         toast({
           title: "Background Removed!",
@@ -112,7 +86,6 @@ export function ImageUploader() {
     } catch (error) {
       console.error("Error processing image:", error)
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
-      setDebugInfo(`Error: ${errorMessage}`)
 
       toast({
         title: "Background removal failed",
@@ -169,7 +142,6 @@ export function ImageUploader() {
                   setInputImage(null)
                   setInputPreview(null)
                   setOutputImage(null)
-                  setDebugInfo("")
                 }}
                 disabled={isLoading}
               >
@@ -193,13 +165,6 @@ export function ImageUploader() {
           "Process Image"
         )}
       </Button>
-
-      {debugInfo && (
-        <Card className="p-4 bg-slate-50 dark:bg-slate-900">
-          <h4 className="text-sm font-medium mb-2">Debug Info:</h4>
-          <pre className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{debugInfo}</pre>
-        </Card>
-      )}
 
       {outputImage && (
         <Card className="p-4 mt-8">
@@ -328,13 +293,26 @@ export function ImageUploader() {
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => {
-              const link = document.createElement("a")
-              link.href = outputImage
-              link.download = "background-removed.png"
-              document.body.appendChild(link)
-              link.click()
-              document.body.removeChild(link)
+            onClick={async () => {
+              try {
+                const response = await fetch(outputImage)
+                const blob = await response.blob()
+                const url = window.URL.createObjectURL(blob)
+                const link = document.createElement("a")
+                link.href = url
+                link.download = "background-removed.png"
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                window.URL.revokeObjectURL(url)
+              } catch (error) {
+                console.error("Download failed:", error)
+                toast({
+                  title: "Download failed",
+                  description: "Could not download the image. Please try right-clicking and saving.",
+                  variant: "destructive",
+                })
+              }
             }}
           >
             Download PNG with Transparent Background
