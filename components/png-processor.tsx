@@ -42,28 +42,33 @@ export function PngProcessor() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Connecting to BiRefNet API...")
+    setDebugInfo("Processing PNG file...")
 
     try {
-      // Use the official Gradio client
-      const { Client } = await import("@gradio/client")
+      const formData = new FormData()
+      formData.append("image", inputImage)
+      formData.append("endpoint", "/png")
 
-      setDebugInfo("Connected! Processing PNG file...")
-      const client = await Client.connect("sudo-saidso/bar")
-
-      const result = await client.predict("/png", {
-        f: inputImage, // Note: parameter name is 'f' for the PNG endpoint
+      const response = await fetch("/api/process-image", {
+        method: "POST",
+        body: formData,
       })
 
-      setDebugInfo(`Full API Response: ${JSON.stringify(result, null, 2)}`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to process PNG")
+      }
+
+      setDebugInfo(`API Response: ${JSON.stringify(result.data, null, 2)}`)
 
       // Handle the response structure - PNG endpoint might return a file directly
       let processedFileUrl = null
 
-      if (result && result.data) {
+      if (result.data && result.data.data) {
         // Check if data is an array
-        if (Array.isArray(result.data) && result.data.length > 0) {
-          const firstItem = result.data[0]
+        if (Array.isArray(result.data.data) && result.data.data.length > 0) {
+          const firstItem = result.data.data[0]
 
           // Case 1: Direct file object
           if (firstItem && typeof firstItem === "object" && firstItem.url) {
@@ -90,10 +95,10 @@ export function PngProcessor() {
           }
         }
         // Check if data is directly a file object
-        else if (result.data && typeof result.data === "object" && result.data.url) {
-          processedFileUrl = result.data.url
-        } else if (result.data && typeof result.data === "object" && result.data.path) {
-          processedFileUrl = result.data.path
+        else if (result.data.data && typeof result.data.data === "object" && result.data.data.url) {
+          processedFileUrl = result.data.data.url
+        } else if (result.data.data && typeof result.data.data === "object" && result.data.data.path) {
+          processedFileUrl = result.data.data.path
         }
       }
 

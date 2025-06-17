@@ -26,41 +26,41 @@ export function TextInput() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Connecting to BiRefNet API...")
+    setDebugInfo("Processing image from URL...")
 
     try {
-      // Use the official Gradio client
-      const { Client } = await import("@gradio/client")
-
-      setDebugInfo("Connected! Processing image from URL...")
-      const client = await Client.connect("sudo-saidso/bar")
-
-      const result = await client.predict("/text", {
-        image: imageUrl,
+      const response = await fetch("/api/process-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageUrl }),
       })
 
-      setDebugInfo(`Full API Response: ${JSON.stringify(result, null, 2)}`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to process image URL")
+      }
+
+      setDebugInfo(`API Response: ${JSON.stringify(result.data, null, 2)}`)
 
       // Handle the nested array response structure
       let processedImageUrl = null
 
-      if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
-        // The response has nested arrays: result.data[0] contains an array of images
-        const imageArray = result.data[0]
+      if (result.data && result.data.data && Array.isArray(result.data.data) && result.data.data.length > 0) {
+        const imageArray = result.data.data[0]
 
         if (Array.isArray(imageArray) && imageArray.length > 0) {
-          // Usually the last image in the array is the processed one
-          // But let's try the second image first (index 1) as it's likely the background-removed version
-          const processedImageData = imageArray.length > 1 ? imageArray[1] : imageArray[0]
-
-          if (processedImageData && typeof processedImageData === "object") {
-            // Check for url property first
-            if (processedImageData.url) {
-              processedImageUrl = processedImageData.url
-            }
-            // Fallback to path property
-            else if (processedImageData.path) {
-              processedImageUrl = processedImageData.path
+          // Try to get the background-removed image - usually the last one
+          for (let i = imageArray.length - 1; i >= 0; i--) {
+            const imageData = imageArray[i]
+            if (imageData && typeof imageData === "object") {
+              const imageUrl = imageData.url || imageData.path
+              if (imageUrl) {
+                processedImageUrl = imageUrl
+                break
+              }
             }
           }
         }

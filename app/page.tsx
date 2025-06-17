@@ -7,7 +7,6 @@ import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
 import { MoonIcon, SunIcon } from "lucide-react"
 import { useTheme } from "next-themes"
-import { ApiTester } from "@/components/api-tester"
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
@@ -37,11 +36,10 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="image">
-              <TabsList className="grid grid-cols-4 mb-8">
+              <TabsList className="grid grid-cols-3 mb-8">
                 <TabsTrigger value="image">Remove Background</TabsTrigger>
                 <TabsTrigger value="text">Remove from URL</TabsTrigger>
                 <TabsTrigger value="png">Download PNG</TabsTrigger>
-                <TabsTrigger value="test">API Test</TabsTrigger>
               </TabsList>
 
               <TabsContent value="image" className="space-y-4">
@@ -54,10 +52,6 @@ export default function Home() {
 
               <TabsContent value="png" className="space-y-4">
                 <PngProcessor />
-              </TabsContent>
-
-              <TabsContent value="test" className="space-y-4">
-                <ApiTester />
               </TabsContent>
             </Tabs>
           </CardContent>

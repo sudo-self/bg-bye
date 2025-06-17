@@ -9,8 +9,6 @@ import { UploadIcon, RefreshCwIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
-// Remove this line: import { Client } from "@gradio/client"
-
 export function ImageUploader() {
   const [isLoading, setIsLoading] = useState(false)
   const [inputImage, setInputImage] = useState<File | null>(null)
@@ -44,67 +42,57 @@ export function ImageUploader() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Connecting to BiRefNet API...")
+    setDebugInfo("Processing image...")
 
     try {
-      // Use the official Gradio client
-      const { Client } = await import("@gradio/client")
+      // Create FormData and log it for debugging
+      const formData = new FormData()
+      formData.append("image", inputImage)
+      formData.append("endpoint", "/image")
 
-      setDebugInfo("Connected! Processing image...")
-      const client = await Client.connect("sudo-saidso/bar")
-
-      const result = await client.predict("/image", {
-        image: inputImage,
+      console.log("Sending FormData:", {
+        imageExists: !!inputImage,
+        imageName: inputImage.name,
+        imageSize: inputImage.size,
+        imageType: inputImage.type,
       })
 
-      setDebugInfo(`Full API Response: ${JSON.stringify(result, null, 2)}`)
+      setDebugInfo(`Sending image: ${inputImage.name} (${inputImage.size} bytes)`)
 
-      // Handle the nested array response structure - try different indices
+      const response = await fetch("/api/process-image", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.details || result.error || "Failed to process image")
+      }
+
+      setDebugInfo(`API Response: ${JSON.stringify(result.data, null, 2)}`)
+
+      // Handle the nested array response structure
       let processedImageUrl = null
-      let originalImageUrl = null
 
-      if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
-        const imageArray = result.data[0]
+      if (result.data && result.data.data && Array.isArray(result.data.data) && result.data.data.length > 0) {
+        const imageArray = result.data.data[0]
 
         if (Array.isArray(imageArray) && imageArray.length > 0) {
           // Log all available images for debugging
           setDebugInfo(
-            `Found ${imageArray.length} images in response:\n${imageArray.map((img, i) => `Image ${i}: ${img.url || img.path || "no url"}`).join("\n")}\n\nFull response: ${JSON.stringify(result, null, 2)}`,
+            `Found ${imageArray.length} images in response:\n${imageArray.map((img, i) => `Image ${i}: ${img.url || img.path || "no url"}`).join("\n")}\n\nFull response: ${JSON.stringify(result.data, null, 2)}`,
           )
 
-          // Try to get the background-removed image
-          // Sometimes it's the last image, sometimes the first after original
+          // Try to get the background-removed image - usually the last one
           for (let i = imageArray.length - 1; i >= 0; i--) {
             const imageData = imageArray[i]
             if (imageData && typeof imageData === "object") {
               const imageUrl = imageData.url || imageData.path
               if (imageUrl) {
-                // The processed image is usually the last one or has different dimensions
-                if (i === imageArray.length - 1 || i === 1) {
-                  processedImageUrl = imageUrl
-                  break
-                }
-                // Keep track of what might be the original
-                if (i === 0) {
-                  originalImageUrl = imageUrl
-                }
+                processedImageUrl = imageUrl
+                break
               }
-            }
-          }
-
-          // If we didn't find a clear processed image, try the last one
-          if (!processedImageUrl && imageArray.length > 1) {
-            const lastImage = imageArray[imageArray.length - 1]
-            if (lastImage && typeof lastImage === "object") {
-              processedImageUrl = lastImage.url || lastImage.path
-            }
-          }
-
-          // Fallback to first image if nothing else works
-          if (!processedImageUrl && imageArray.length > 0) {
-            const firstImage = imageArray[0]
-            if (firstImage && typeof firstImage === "object") {
-              processedImageUrl = firstImage.url || firstImage.path
             }
           }
         }
