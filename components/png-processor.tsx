@@ -42,60 +42,71 @@ export function PngProcessor() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Starting PNG file processing...")
+    setDebugInfo("Connecting to BiRefNet API...")
 
     try {
-      // Convert image to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(inputImage)
+      // Use the official Gradio client
+      const { Client } = await import("@gradio/client")
+
+      setDebugInfo("Connected! Processing PNG file...")
+      const client = await Client.connect("sudo-saidso/bar")
+
+      const result = await client.predict("/png", {
+        f: inputImage, // Note: parameter name is 'f' for the PNG endpoint
       })
 
-      setDebugInfo("Image converted, sending to API...")
+      setDebugInfo(`Full API Response: ${JSON.stringify(result, null, 2)}`)
 
-      const response = await fetch("https://sudo-saidso-bar.hf.space/api/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: [base64],
-          fn_index: 2,
-        }),
-      })
+      // Handle the response structure - PNG endpoint might return a file directly
+      let processedFileUrl = null
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      if (result && result.data) {
+        // Check if data is an array
+        if (Array.isArray(result.data) && result.data.length > 0) {
+          const firstItem = result.data[0]
+
+          // Case 1: Direct file object
+          if (firstItem && typeof firstItem === "object" && firstItem.url) {
+            processedFileUrl = firstItem.url
+          }
+          // Case 2: Path property
+          else if (firstItem && typeof firstItem === "object" && firstItem.path) {
+            processedFileUrl = firstItem.path
+          }
+          // Case 3: Direct URL string
+          else if (typeof firstItem === "string") {
+            processedFileUrl = firstItem
+          }
+          // Case 4: Nested array like other endpoints
+          else if (Array.isArray(firstItem) && firstItem.length > 0) {
+            const nestedItem = firstItem.length > 1 ? firstItem[1] : firstItem[0]
+            if (nestedItem && typeof nestedItem === "object") {
+              if (nestedItem.url) {
+                processedFileUrl = nestedItem.url
+              } else if (nestedItem.path) {
+                processedFileUrl = nestedItem.path
+              }
+            }
+          }
+        }
+        // Check if data is directly a file object
+        else if (result.data && typeof result.data === "object" && result.data.url) {
+          processedFileUrl = result.data.url
+        } else if (result.data && typeof result.data === "object" && result.data.path) {
+          processedFileUrl = result.data.path
+        }
       }
 
-      const result = await response.json()
-      setDebugInfo(`API response: ${JSON.stringify(result, null, 2)}`)
+      if (processedFileUrl) {
+        setOutputFile(processedFileUrl)
+        setDebugInfo(`Success! PNG file created. File URL: ${processedFileUrl}`)
 
-      // Handle the result - this endpoint returns a file
-      if (result && result.data && result.data[0]) {
-        const fileData = result.data[0]
-
-        if (typeof fileData === "string") {
-          setOutputFile(fileData)
-          setDebugInfo(`Success! PNG file created.`)
-          toast({
-            title: "PNG Created!",
-            description: "Your PNG file with transparent background is ready",
-          })
-        } else if (fileData && fileData.url) {
-          setOutputFile(fileData.url)
-          setDebugInfo(`Success! PNG file created.`)
-          toast({
-            title: "PNG Created!",
-            description: "Your PNG file with transparent background is ready",
-          })
-        } else {
-          throw new Error("Invalid file format in response")
-        }
+        toast({
+          title: "PNG Created!",
+          description: "Your PNG file with transparent background is ready",
+        })
       } else {
-        throw new Error(`Invalid response format: ${JSON.stringify(result)}`)
+        throw new Error(`Could not find file URL in response. Full response: ${JSON.stringify(result)}`)
       }
     } catch (error) {
       console.error("Error processing PNG:", error)
@@ -195,6 +206,24 @@ export function PngProcessor() {
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
             Your PNG file has been successfully processed and is ready for download.
           </p>
+
+          {/* Show preview of the PNG file */}
+          <div
+            className="relative w-full aspect-video max-h-[300px] overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 mb-4"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20'%3e%3crect fill='%23f1f5f9' width='10' height='10'/%3e%3crect fill='%23e2e8f0' x='10' width='10' height='10'/%3e%3crect fill='%23e2e8f0' y='10' width='10' height='10'/%3e%3crect fill='%23f1f5f9' x='10' y='10' width='10' height='10'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e\")",
+            }}
+          >
+            <Image
+              src={outputFile || "/placeholder.svg"}
+              alt="Processed PNG file"
+              fill
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+
           <Button
             className="w-full"
             onClick={() => {

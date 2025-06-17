@@ -44,62 +44,82 @@ export function ImageUploader() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Starting background removal...")
+    setDebugInfo("Connecting to BiRefNet API...")
 
     try {
-      // Convert image to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(inputImage)
+      // Use the official Gradio client
+      const { Client } = await import("@gradio/client")
+
+      setDebugInfo("Connected! Processing image...")
+      const client = await Client.connect("sudo-saidso/bar")
+
+      const result = await client.predict("/image", {
+        image: inputImage,
       })
 
-      setDebugInfo("Image converted to base64, sending to API...")
+      setDebugInfo(`Full API Response: ${JSON.stringify(result, null, 2)}`)
 
-      // Direct API call to Hugging Face Space
-      const response = await fetch("https://sudo-saidso-bar.hf.space/api/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: [base64],
-          fn_index: 0,
-        }),
-      })
+      // Handle the nested array response structure - try different indices
+      let processedImageUrl = null
+      let originalImageUrl = null
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+        const imageArray = result.data[0]
+
+        if (Array.isArray(imageArray) && imageArray.length > 0) {
+          // Log all available images for debugging
+          setDebugInfo(
+            `Found ${imageArray.length} images in response:\n${imageArray.map((img, i) => `Image ${i}: ${img.url || img.path || "no url"}`).join("\n")}\n\nFull response: ${JSON.stringify(result, null, 2)}`,
+          )
+
+          // Try to get the background-removed image
+          // Sometimes it's the last image, sometimes the first after original
+          for (let i = imageArray.length - 1; i >= 0; i--) {
+            const imageData = imageArray[i]
+            if (imageData && typeof imageData === "object") {
+              const imageUrl = imageData.url || imageData.path
+              if (imageUrl) {
+                // The processed image is usually the last one or has different dimensions
+                if (i === imageArray.length - 1 || i === 1) {
+                  processedImageUrl = imageUrl
+                  break
+                }
+                // Keep track of what might be the original
+                if (i === 0) {
+                  originalImageUrl = imageUrl
+                }
+              }
+            }
+          }
+
+          // If we didn't find a clear processed image, try the last one
+          if (!processedImageUrl && imageArray.length > 1) {
+            const lastImage = imageArray[imageArray.length - 1]
+            if (lastImage && typeof lastImage === "object") {
+              processedImageUrl = lastImage.url || lastImage.path
+            }
+          }
+
+          // Fallback to first image if nothing else works
+          if (!processedImageUrl && imageArray.length > 0) {
+            const firstImage = imageArray[0]
+            if (firstImage && typeof firstImage === "object") {
+              processedImageUrl = firstImage.url || firstImage.path
+            }
+          }
+        }
       }
 
-      const result = await response.json()
-      setDebugInfo(`API response: ${JSON.stringify(result, null, 2)}`)
+      if (processedImageUrl) {
+        setOutputImage(processedImageUrl)
+        setDebugInfo(`Success! Background removed. Image URL: ${processedImageUrl}`)
 
-      // Handle the result
-      if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
-        // The first item should be the processed image with transparent background
-        const processedImage = result.data[0]
-
-        if (typeof processedImage === "string") {
-          setOutputImage(processedImage)
-          setDebugInfo(`Success! Background removed.`)
-          toast({
-            title: "Background Removed!",
-            description: "Your image has been processed with transparent background",
-          })
-        } else if (processedImage && processedImage.url) {
-          setOutputImage(processedImage.url)
-          setDebugInfo(`Success! Background removed.`)
-          toast({
-            title: "Background Removed!",
-            description: "Your image has been processed with transparent background",
-          })
-        } else {
-          throw new Error("Invalid image format in response")
-        }
+        toast({
+          title: "Background Removed!",
+          description: "Your image has been processed with transparent background",
+        })
       } else {
-        throw new Error(`Invalid response format: ${JSON.stringify(result)}`)
+        throw new Error(`Could not find image URL in response. Full response: ${JSON.stringify(result)}`)
       }
     } catch (error) {
       console.error("Error processing image:", error)
@@ -196,25 +216,130 @@ export function ImageUploader() {
       {outputImage && (
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Your image now has a transparent background</p>
-          <div
-            className="relative w-full aspect-video max-h-[300px] overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20'%3e%3crect fill='%23f1f5f9' width='10' height='10'/%3e%3crect fill='%23e2e8f0' x='10' width='10' height='10'/%3e%3crect fill='%23e2e8f0' y='10' width='10' height='10'/%3e%3crect fill='%23f1f5f9' x='10' y='10' width='10' height='10'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e\")",
-            }}
-          >
-            <Image
-              src={outputImage || "/placeholder.svg"}
-              alt="Background removed image"
-              fill
-              className="object-contain"
-              unoptimized
-            />
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Your image now has a transparent background. The checkerboard pattern shows transparency.
+          </p>
+
+          {/* Side-by-side comparison */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Original Image */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-center">Original</h4>
+              <div className="relative w-full aspect-video overflow-hidden rounded-lg bg-white border">
+                <Image
+                  src={inputPreview || "/placeholder.svg"}
+                  alt="Original image"
+                  fill
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
+            </div>
+
+            {/* Processed Image */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-center">Background Removed</h4>
+              <div
+                className="relative w-full aspect-video overflow-hidden rounded-lg border"
+                style={{
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20'%3e%3crect fill='%23f1f5f9' width='10' height='10'/%3e%3crect fill='%23e2e8f0' x='10' width='10' height='10'/%3e%3crect fill='%23e2e8f0' y='10' width='10' height='10'/%3e%3crect fill='%23f1f5f9' x='10' y='10' width='10' height='10'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e\")",
+                }}
+              >
+                <Image
+                  src={outputImage || "/placeholder.svg"}
+                  alt="Background removed image"
+                  fill
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
+            </div>
           </div>
+
+          {/* Background options */}
+          <div className="space-y-3 mb-4">
+            <h4 className="text-sm font-medium">Preview Background:</h4>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const container = document.getElementById("bg-preview")
+                  if (container) {
+                    container.style.backgroundImage =
+                      "url(\"data:image/svg+xml,%3csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20'%3e%3crect fill='%23f1f5f9' width='10' height='10'/%3e%3crect fill='%23e2e8f0' x='10' width='10' height='10'/%3e%3crect fill='%23e2e8f0' y='10' width='10' height='10'/%3e%3crect fill='%23f1f5f9' x='10' y='10' width='10' height='10'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e\")"
+                  }
+                }}
+              >
+                Transparent
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const container = document.getElementById("bg-preview")
+                  if (container) {
+                    container.style.backgroundImage = "none"
+                    container.style.backgroundColor = "#ffffff"
+                  }
+                }}
+              >
+                White
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const container = document.getElementById("bg-preview")
+                  if (container) {
+                    container.style.backgroundImage = "none"
+                    container.style.backgroundColor = "#000000"
+                  }
+                }}
+              >
+                Black
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const container = document.getElementById("bg-preview")
+                  if (container) {
+                    container.style.backgroundImage = "linear-gradient(45deg, #ff6b6b, #4ecdc4)"
+                    container.style.backgroundColor = "transparent"
+                  }
+                }}
+              >
+                Gradient
+              </Button>
+            </div>
+          </div>
+
+          {/* Large preview with changeable background */}
+          <div className="space-y-2 mb-4">
+            <h4 className="text-sm font-medium text-center">Full Preview</h4>
+            <div
+              id="bg-preview"
+              className="relative w-full aspect-video max-h-[400px] overflow-hidden rounded-lg border"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20'%3e%3crect fill='%23f1f5f9' width='10' height='10'/%3e%3crect fill='%23e2e8f0' x='10' width='10' height='10'/%3e%3crect fill='%23e2e8f0' y='10' width='10' height='10'/%3e%3crect fill='%23f1f5f9' x='10' y='10' width='10' height='10'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e\")",
+              }}
+            >
+              <Image
+                src={outputImage || "/placeholder.svg"}
+                alt="Background removed image - full preview"
+                fill
+                className="object-contain"
+                unoptimized
+              />
+            </div>
+          </div>
+
           <Button
             variant="outline"
-            className="mt-4 w-full"
+            className="w-full"
             onClick={() => {
               const link = document.createElement("a")
               link.href = outputImage

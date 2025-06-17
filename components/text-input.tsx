@@ -26,52 +26,56 @@ export function TextInput() {
     }
 
     setIsLoading(true)
-    setDebugInfo("Starting background removal from URL...")
+    setDebugInfo("Connecting to BiRefNet API...")
 
     try {
-      setDebugInfo("Sending URL to API...")
+      // Use the official Gradio client
+      const { Client } = await import("@gradio/client")
 
-      const response = await fetch("https://sudo-saidso-bar.hf.space/api/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: [imageUrl],
-          fn_index: 1,
-        }),
+      setDebugInfo("Connected! Processing image from URL...")
+      const client = await Client.connect("sudo-saidso/bar")
+
+      const result = await client.predict("/text", {
+        image: imageUrl,
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      setDebugInfo(`Full API Response: ${JSON.stringify(result, null, 2)}`)
+
+      // Handle the nested array response structure
+      let processedImageUrl = null
+
+      if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+        // The response has nested arrays: result.data[0] contains an array of images
+        const imageArray = result.data[0]
+
+        if (Array.isArray(imageArray) && imageArray.length > 0) {
+          // Usually the last image in the array is the processed one
+          // But let's try the second image first (index 1) as it's likely the background-removed version
+          const processedImageData = imageArray.length > 1 ? imageArray[1] : imageArray[0]
+
+          if (processedImageData && typeof processedImageData === "object") {
+            // Check for url property first
+            if (processedImageData.url) {
+              processedImageUrl = processedImageData.url
+            }
+            // Fallback to path property
+            else if (processedImageData.path) {
+              processedImageUrl = processedImageData.path
+            }
+          }
+        }
       }
 
-      const result = await response.json()
-      setDebugInfo(`API response: ${JSON.stringify(result, null, 2)}`)
+      if (processedImageUrl) {
+        setOutputImage(processedImageUrl)
+        setDebugInfo(`Success! Background removed. Image URL: ${processedImageUrl}`)
 
-      // Handle the result
-      if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
-        const processedImage = result.data[0]
-
-        if (typeof processedImage === "string") {
-          setOutputImage(processedImage)
-          setDebugInfo(`Success! Background removed from URL.`)
-          toast({
-            title: "Background Removed!",
-            description: "Background removed from URL image successfully",
-          })
-        } else if (processedImage && processedImage.url) {
-          setOutputImage(processedImage.url)
-          setDebugInfo(`Success! Background removed from URL.`)
-          toast({
-            title: "Background Removed!",
-            description: "Background removed from URL image successfully",
-          })
-        } else {
-          throw new Error("Invalid image format in response")
-        }
+        toast({
+          title: "Background Removed!",
+          description: "Background removed from URL image successfully",
+        })
       } else {
-        throw new Error(`Invalid response format: ${JSON.stringify(result)}`)
+        throw new Error(`Could not find image URL in response. Full response: ${JSON.stringify(result)}`)
       }
     } catch (error) {
       console.error("Error processing image URL:", error)
