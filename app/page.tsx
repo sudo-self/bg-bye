@@ -32,14 +32,14 @@ export default function Home() {
         <Card className="border border-slate-200 dark:border-slate-800 shadow-lg">
           <CardHeader>
             <CardTitle>Background Removal</CardTitle>
-            <CardDescription>Upload an image or paste a URL to remove the background</CardDescription>
+            <CardDescription>Upload an image, URL, or PNG to remove the background</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="image">
               <TabsList className="grid grid-cols-3 mb-8">
-                <TabsTrigger value="image">Remove Background</TabsTrigger>
-                <TabsTrigger value="text">Remove from URL</TabsTrigger>
-                <TabsTrigger value="png">Download PNG</TabsTrigger>
+                <TabsTrigger value="image">BG</TabsTrigger>
+                <TabsTrigger value="text">URL</TabsTrigger>
+                <TabsTrigger value="png">PNG</TabsTrigger>
               </TabsList>
 
               <TabsContent value="image" className="space-y-4">
