@@ -32,7 +32,7 @@ export default function Home() {
         <Card className="border border-slate-200 dark:border-slate-800 shadow-lg">
           <CardHeader>
             <CardTitle>Background Removal</CardTitle>
-            <CardDescription>Upload an image, URL, or PNG to remove the background</CardDescription>
+            <CardDescription>Upload an image bye bye background</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="image">
