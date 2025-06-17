@@ -162,7 +162,7 @@ export function ImageUploader() {
             Processing...
           </>
         ) : (
-          "Process Image"
+          "Remove Background"
         )}
       </Button>
 
