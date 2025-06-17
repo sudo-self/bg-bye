@@ -17,7 +17,16 @@ export default function Home() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">BG BYE BYE</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">bg-bye-bye.vercel.app</p>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">
+  <a 
+    href="https://bg-bye-bye.vercel.app" 
+    target="_blank" 
+    rel="noopener noreferrer"
+  >
+    bg-bye-bye.vercel.app
+  </a>
+</p>
+
           </div>
           <Button
             variant="ghost"
