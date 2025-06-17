@@ -89,7 +89,7 @@ export function TextInput() {
           </label>
           <Input
             id="image-url"
-            placeholder="https://example.com/image.jpg"
+            placeholder="https://your-photo.com/image.jpg"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             disabled={isLoading}
