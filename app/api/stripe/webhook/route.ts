@@ -26,13 +26,23 @@ export async function POST(req: NextRequest) {
     case "checkout.session.completed":
       const session = event.data.object as Stripe.Checkout.Session
 
-      // Handle both subscription and one-time payments
+      // Handle different payment modes
       if (session.mode === "subscription") {
         console.log("Subscription completed:", session.id)
         // Handle subscription logic
       } else if (session.mode === "payment") {
-        console.log("One-time payment completed:", session.id)
-        // Handle one-time payment logic
+        // Check if it's a one-time payment or pay-per-use
+        const lineItems = await stripe.checkout.sessions.listLineItems(session.id)
+        const amount = session.amount_total || 0
+
+        if (amount === 99) {
+          // $0.99 in cents
+          console.log("Pay-per-use payment completed:", session.id)
+          // Handle pay-per-use logic
+        } else {
+          console.log("One-time payment completed:", session.id)
+          // Handle lifetime payment logic
+        }
       }
 
       break
@@ -54,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     case "payment_intent.succeeded":
       const paymentIntent = event.data.object as Stripe.PaymentIntent
-      console.log("One-time payment succeeded:", paymentIntent.id)
+      console.log("Payment succeeded:", paymentIntent.id, "Amount:", paymentIntent.amount)
       break
 
     default:

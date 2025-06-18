@@ -29,14 +29,30 @@ export async function POST(req: NextRequest) {
           paymentType: "subscription",
         })
       } else if (session.mode === "payment") {
-        // Handle one-time payment
-        return NextResponse.json({
-          isPremium: true,
-          paymentIntentId: session.payment_intent,
-          customerId: session.customer,
-          status: "paid",
-          paymentType: "one-time",
-        })
+        // Check payment amount to determine type
+        const amount = session.amount_total || 0
+
+        if (amount === 99) {
+          // $0.99 in cents - pay per use
+          return NextResponse.json({
+            isPremium: false, // Pay-per-use doesn't grant premium status
+            paymentIntentId: session.payment_intent,
+            customerId: session.customer,
+            status: "paid",
+            paymentType: "pay-per-use",
+            amount: amount,
+          })
+        } else {
+          // One-time lifetime payment
+          return NextResponse.json({
+            isPremium: true,
+            paymentIntentId: session.payment_intent,
+            customerId: session.customer,
+            status: "paid",
+            paymentType: "one-time",
+            amount: amount,
+          })
+        }
       }
     }
 
