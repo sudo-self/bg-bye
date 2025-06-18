@@ -26,12 +26,14 @@ export async function POST(req: NextRequest) {
     case "checkout.session.completed":
       const session = event.data.object as Stripe.Checkout.Session
 
-      // Store subscription info in your database or session
-      // For now, we'll use a simple approach with localStorage via the client
-      console.log("Subscription completed:", session.id)
-
-      // You would typically save this to your database here
-      // await saveSubscription(session.customer, session.subscription)
+      // Handle both subscription and one-time payments
+      if (session.mode === "subscription") {
+        console.log("Subscription completed:", session.id)
+        // Handle subscription logic
+      } else if (session.mode === "payment") {
+        console.log("One-time payment completed:", session.id)
+        // Handle one-time payment logic
+      }
 
       break
 
@@ -48,6 +50,11 @@ export async function POST(req: NextRequest) {
     case "customer.subscription.deleted":
       const deletedSubscription = event.data.object as Stripe.Subscription
       console.log("Subscription cancelled:", deletedSubscription.id)
+      break
+
+    case "payment_intent.succeeded":
+      const paymentIntent = event.data.object as Stripe.PaymentIntent
+      console.log("One-time payment succeeded:", paymentIntent.id)
       break
 
     default:

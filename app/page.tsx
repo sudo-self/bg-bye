@@ -133,24 +133,46 @@ function HomeContent() {
                   </div>
 
                   <div className="flex flex-col items-center space-y-4">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-slate-900 dark:text-white">$9.99</div>
-                      <div className="text-slate-600 dark:text-slate-400">per month</div>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                      {/* Subscription Option */}
+                      <div className="text-center p-4 border rounded-lg bg-white dark:bg-slate-800">
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white">$9.99</div>
+                        <div className="text-slate-600 dark:text-slate-400 mb-3">per month</div>
+                        <div className="text-sm text-slate-500 dark:text-slate-400 mb-4">Cancel anytime</div>
 
-                    {/* Stripe Buy Button */}
-                    <div className="w-full max-w-sm">
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: `
-                            <stripe-buy-button
-                              buy-button-id="buy_btn_1RbIgQRiudKubuwQk55KLlvF"
-                              publishable-key="pk_test_51RbIcbRiudKubuwQIR3PQ6vXaU2k7HhxCMX8uExFmo6k2AyqBmZjgp7GkeMAf5HljOAEenHXsQv7PeTxL8yvsNDx00SRPTlkqx"
-                            >
-                            </stripe-buy-button>
-                          `,
-                        }}
-                      />
+                        {/* Monthly Subscription Button */}
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: `
+                              <stripe-buy-button
+                                buy-button-id="buy_btn_1RbIgQRiudKubuwQk55KLlvF"
+                                publishable-key="pk_test_51RbIcbRiudKubuwQIR3PQ6vXaU2k7HhxCMX8uExFmo6k2AyqBmZjgp7GkeMAf5HljOAEenHXsQv7PeTxL8yvsNDx00SRPTlkqx"
+                              >
+                              </stripe-buy-button>
+                            `,
+                          }}
+                        />
+                      </div>
+
+                      {/* One-time Payment Option */}
+                      <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white">$29.99</div>
+                        <div className="text-slate-600 dark:text-slate-400 mb-3">one-time</div>
+                        <div className="text-sm text-purple-600 dark:text-purple-400 mb-4">Lifetime access</div>
+
+                        {/* One-time Payment Button */}
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: `
+                              <stripe-buy-button
+                                buy-button-id="buy_btn_1RbKFoDxlwFi5k13SznJwY0G"
+                                publishable-key="pk_live_51RDFFrDxlwFi5k13I6H0uxEeUV4cOMgOF5Kx2tOYG7a1F7Egidw3vSRwLFgqIkYwiShbiuwJ6U8QmlC1Rkj8RQeEO00hftg2cXH"
+                              >
+                              </stripe-buy-button>
+                            `,
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

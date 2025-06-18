@@ -9,10 +9,11 @@ interface UsageContextType {
   hasReachedLimit: boolean
   isPremium: boolean
   isCheckingPremium: boolean
+  paymentType: "subscription" | "one-time" | null
   useFreeTrial: () => void
   resetUsage: () => void
   checkSubscriptionStatus: (sessionId: string) => Promise<void>
-  setPremiumStatus: (status: boolean) => void
+  setPremiumStatus: (status: boolean, paymentType?: "subscription" | "one-time") => void
 }
 
 const UsageContext = createContext<UsageContextType | undefined>(undefined)
@@ -21,6 +22,7 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
   const [freeUsesRemaining, setFreeUsesRemaining] = useState(1)
   const [isPremium, setIsPremium] = useState(false)
   const [isCheckingPremium, setIsCheckingPremium] = useState(false)
+  const [paymentType, setPaymentType] = useState<"subscription" | "one-time" | null>(null)
 
   // Load usage from localStorage on mount
   useEffect(() => {
@@ -65,10 +67,12 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("bg-removal-usage")
   }
 
-  const setPremiumStatus = (status: boolean) => {
+  const setPremiumStatus = (status: boolean, type?: "subscription" | "one-time") => {
     setIsPremium(status)
+    if (type) {
+      setPaymentType(type)
+    }
     if (status) {
-      // Clear any pending session verification
       localStorage.removeItem("bg-removal-pending-session")
     }
   }
@@ -89,10 +93,17 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
 
       if (data.isPremium) {
         setIsPremium(true)
-        localStorage.setItem("bg-removal-subscription-id", data.subscriptionId)
+        setPaymentType(data.paymentType)
+        localStorage.setItem("bg-removal-payment-type", data.paymentType)
+
+        if (data.paymentType === "subscription") {
+          localStorage.setItem("bg-removal-subscription-id", data.subscriptionId)
+        } else {
+          localStorage.setItem("bg-removal-payment-intent-id", data.paymentIntentId)
+        }
+
         localStorage.removeItem("bg-removal-pending-session")
       } else {
-        // Store session ID for later verification
         localStorage.setItem("bg-removal-pending-session", sessionId)
       }
     } catch (error) {
@@ -111,6 +122,7 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
         hasReachedLimit,
         isPremium,
         isCheckingPremium,
+        paymentType,
         useFreeTrial,
         resetUsage,
         checkSubscriptionStatus,

@@ -16,16 +16,28 @@ export async function POST(req: NextRequest) {
     // Retrieve the checkout session
     const session = await stripe.checkout.sessions.retrieve(sessionId)
 
-    if (session.payment_status === "paid" && session.subscription) {
-      // Retrieve subscription details
-      const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+    if (session.payment_status === "paid") {
+      if (session.mode === "subscription" && session.subscription) {
+        // Handle subscription
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
 
-      return NextResponse.json({
-        isPremium: subscription.status === "active",
-        subscriptionId: subscription.id,
-        customerId: subscription.customer,
-        status: subscription.status,
-      })
+        return NextResponse.json({
+          isPremium: subscription.status === "active",
+          subscriptionId: subscription.id,
+          customerId: subscription.customer,
+          status: subscription.status,
+          paymentType: "subscription",
+        })
+      } else if (session.mode === "payment") {
+        // Handle one-time payment
+        return NextResponse.json({
+          isPremium: true,
+          paymentIntentId: session.payment_intent,
+          customerId: session.customer,
+          status: "paid",
+          paymentType: "one-time",
+        })
+      }
     }
 
     return NextResponse.json({ isPremium: false })
