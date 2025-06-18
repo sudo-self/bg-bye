@@ -1,4 +1,5 @@
 "use client"
+
 import Script from "next/script"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -6,19 +7,35 @@ import { ImageUploader } from "@/components/image-uploader"
 import { TextInput } from "@/components/text-input"
 import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
-import { MoonIcon, SunIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { MoonIcon, SunIcon, Crown, Zap, Lock, CheckCircle } from "lucide-react"
 import { useTheme } from "next-themes"
+import { UsageProvider, useUsage } from "@/components/usage-context"
+import { useEffect } from "react"
 
-export default function Home() {
+function HomeContent() {
   const { theme, setTheme } = useTheme()
+  const { freeUsesRemaining, hasReachedLimit, isPremium, isCheckingPremium } = useUsage()
+
+  // Listen for Stripe checkout completion
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== "https://js.stripe.com") return
+
+      if (event.data.type === "stripe_checkout_session_complete") {
+        // Redirect to success page with session ID
+        const sessionId = event.data.session.id
+        window.location.href = `/success?session_id=${sessionId}`
+      }
+    }
+
+    window.addEventListener("message", handleMessage)
+    return () => window.removeEventListener("message", handleMessage)
+  }, [])
 
   return (
     <>
-      <Script
-        async
-        src="https://js.stripe.com/v3/buy-button.js"
-        strategy="afterInteractive"
-      />
+      <Script async src="https://js.stripe.com/v3/buy-button.js" strategy="afterInteractive" />
 
       <main className="min-h-screen p-4 md:p-8 lg:p-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
         <div className="max-w-5xl mx-auto">
@@ -26,36 +43,163 @@ export default function Home() {
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">BG BYE BYE</h1>
               <p className="text-slate-600 dark:text-slate-400 mt-2">
-                <a 
-                  href="https://bg-bye-bye.vercel.app" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                 🌬️ bg-bye-bye.vercel.app
+                <a href="https://bg-bye-bye.vercel.app" target="_blank" rel="noopener noreferrer">
+                  🌬️ bg-bye-bye.vercel.app
                 </a>
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-full"
-            >
-              {theme === "dark" ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-            </Button>
+            <div className="flex items-center gap-4">
+              {/* Usage Counter */}
+              {isCheckingPremium ? (
+                <Badge variant="secondary" className="px-3 py-1">
+                  Checking subscription...
+                </Badge>
+              ) : isPremium ? (
+                <Badge variant="default" className="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600">
+                  <div className="flex items-center gap-1">
+                    <Crown className="h-3 w-3" />
+                    Premium Active
+                  </div>
+                </Badge>
+              ) : (
+                <Badge variant={hasReachedLimit ? "destructive" : "secondary"} className="px-3 py-1">
+                  {hasReachedLimit ? (
+                    <div className="flex items-center gap-1">
+                      <Lock className="h-3 w-3" />
+                      Limit Reached
+                    </div>
+                  ) : (
+                    `${freeUsesRemaining} free removal${freeUsesRemaining !== 1 ? "s" : ""} left`
+                  )}
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="rounded-full"
+              >
+                {theme === "dark" ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+              </Button>
+            </div>
           </div>
+
+          {/* Premium Subscription Card - Hide if already premium */}
+          {!isPremium && (
+            <Card
+              className={`border-2 shadow-xl mb-6 ${
+                hasReachedLimit
+                  ? "border-red-500 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20 animate-pulse"
+                  : "border-gradient-to-r from-purple-500 to-pink-500 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20"
+              }`}
+            >
+              <CardHeader className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Crown className="h-6 w-6 text-purple-600" />
+                  <CardTitle
+                    className={`text-2xl bg-gradient-to-r bg-clip-text text-transparent ${
+                      hasReachedLimit ? "from-red-600 to-pink-600" : "from-purple-600 to-pink-600"
+                    }`}
+                  >
+                    {hasReachedLimit ? "Upgrade Required!" : "Go Premium"}
+                  </CardTitle>
+                  <Crown className="h-6 w-6 text-purple-600" />
+                </div>
+                <CardDescription className="text-lg">
+                  {hasReachedLimit
+                    ? "You've used your free removal. Upgrade for unlimited access!"
+                    : "Unlock unlimited background removals with our premium subscription"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6 items-center">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Zap className="h-5 w-5 text-green-500" />
+                      <span className="text-slate-700 dark:text-slate-300">Unlimited background removals</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Zap className="h-5 w-5 text-green-500" />
+                      <span className="text-slate-700 dark:text-slate-300">High-resolution downloads</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Zap className="h-5 w-5 text-green-500" />
+                      <span className="text-slate-700 dark:text-slate-300">Priority processing</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Zap className="h-5 w-5 text-green-500" />
+                      <span className="text-slate-700 dark:text-slate-300">No watermarks</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-slate-900 dark:text-white">$9.99</div>
+                      <div className="text-slate-600 dark:text-slate-400">per month</div>
+                    </div>
+
+                    {/* Stripe Buy Button */}
+                    <div className="w-full max-w-sm">
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: `
+                            <stripe-buy-button
+                              buy-button-id="buy_btn_1RbIgQRiudKubuwQk55KLlvF"
+                              publishable-key="pk_test_51RbIcbRiudKubuwQIR3PQ6vXaU2k7HhxCMX8uExFmo6k2AyqBmZjgp7GkeMAf5HljOAEenHXsQv7PeTxL8yvsNDx00SRPTlkqx"
+                            >
+                            </stripe-buy-button>
+                          `,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Premium Success Message */}
+          {isPremium && (
+            <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 shadow-xl mb-6">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center gap-3">
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <div className="text-center">
+                    <h3 className="text-xl font-bold text-green-800 dark:text-green-400">Premium Active!</h3>
+                    <p className="text-green-700 dark:text-green-300">Enjoy unlimited background removals</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border border-slate-200 dark:border-slate-800 shadow-lg mb-6">
             <CardHeader>
-              <CardTitle>Background Removal</CardTitle>
-              <CardDescription>Upload an image bye bye background</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Background Removal</CardTitle>
+                  <CardDescription>Upload an image bye bye background</CardDescription>
+                </div>
+                {hasReachedLimit && !isPremium && (
+                  <Badge variant="destructive" className="flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Premium Required
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="image">
                 <TabsList className="grid grid-cols-3 mb-8">
-                  <TabsTrigger value="image">BG</TabsTrigger>
-                  <TabsTrigger value="text">URL</TabsTrigger>
-                  <TabsTrigger value="png">PNG</TabsTrigger>
+                  <TabsTrigger value="image" disabled={hasReachedLimit && !isPremium}>
+                    BG
+                  </TabsTrigger>
+                  <TabsTrigger value="text" disabled={hasReachedLimit && !isPremium}>
+                    URL
+                  </TabsTrigger>
+                  <TabsTrigger value="png" disabled={hasReachedLimit && !isPremium}>
+                    PNG
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="image" className="space-y-4">
@@ -72,22 +216,16 @@ export default function Home() {
               </Tabs>
             </CardContent>
           </Card>
-
-          {/* Stripe Buy Button */}
-          <div
-            dangerouslySetInnerHTML={{
-              __html: `
-                <stripe-buy-button
-                  buy-button-id="buy_btn_1RbIgQRiudKubuwQk55KLlvF"
-                  publishable-key="pk_test_51RbIcbRiudKubuwQIR3PQ6vXaU2k7HhxCMX8uExFmo6k2AyqBmZjgp7GkeMAf5HljOAEenHXsQv7PeTxL8yvsNDx00SRPTlkqx"
-                >
-                </stripe-buy-button>
-              `,
-            }}
-          />
         </div>
       </main>
     </>
   )
 }
 
+export default function Home() {
+  return (
+    <UsageProvider>
+      <HomeContent />
+    </UsageProvider>
+  )
+}
