@@ -28,7 +28,7 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedUsage = localStorage.getItem("bg-removal-usage")
     const savedPremium = localStorage.getItem("bg-removal-premium")
-    const savedPaymentType = localStorage.getItem("bg-removal-payment-type")
+    const savedSubscriptionId = localStorage.getItem("bg-removal-subscription-id")
 
     if (savedUsage) {
       setFreeUsesRemaining(Number.parseInt(savedUsage, 10))
@@ -36,10 +36,6 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
 
     if (savedPremium === "true") {
       setIsPremium(true)
-    }
-
-    if (savedPaymentType) {
-      setPaymentType(savedPaymentType as "subscription" | "one-time")
     }
 
     // Check for pending subscription verification
@@ -58,13 +54,6 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem("bg-removal-premium", isPremium.toString())
   }, [isPremium])
-
-  // Save payment type to localStorage
-  useEffect(() => {
-    if (paymentType) {
-      localStorage.setItem("bg-removal-payment-type", paymentType)
-    }
-  }, [paymentType])
 
   const useFreeTrial = () => {
     if (freeUsesRemaining > 0 && !isPremium) {
@@ -105,11 +94,7 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
       if (data.isPremium) {
         setIsPremium(true)
         setPaymentType(data.paymentType)
-
-        // Store customer ID for account management
-        if (data.customerId) {
-          localStorage.setItem("bg-removal-customer-id", data.customerId)
-        }
+        localStorage.setItem("bg-removal-payment-type", data.paymentType)
 
         if (data.paymentType === "subscription") {
           localStorage.setItem("bg-removal-subscription-id", data.subscriptionId)

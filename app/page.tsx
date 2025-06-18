@@ -8,16 +8,14 @@ import { TextInput } from "@/components/text-input"
 import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoonIcon, SunIcon, Crown, Zap, Lock, CheckCircle, Settings } from "lucide-react"
+import { MoonIcon, SunIcon, Crown, Zap, Lock, CheckCircle } from "lucide-react"
 import { useTheme } from "next-themes"
 import { UsageProvider, useUsage } from "@/components/usage-context"
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 
 function HomeContent() {
   const { theme, setTheme } = useTheme()
-  const { freeUsesRemaining, hasReachedLimit, isPremium, isCheckingPremium, paymentType } = useUsage()
-  const router = useRouter()
+  const { freeUsesRemaining, hasReachedLimit, isPremium, isCheckingPremium } = useUsage()
 
   // Listen for Stripe checkout completion
   useEffect(() => {
@@ -57,25 +55,12 @@ function HomeContent() {
                   Checking subscription...
                 </Badge>
               ) : isPremium ? (
-                <div className="flex items-center gap-2">
-                  <Badge variant="default" className="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600">
-                    <div className="flex items-center gap-1">
-                      <Crown className="h-3 w-3" />
-                      Premium Active
-                    </div>
-                  </Badge>
-                  {paymentType === "subscription" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => router.push("/account")}
-                      className="rounded-full"
-                      title="Account Settings"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+                <Badge variant="default" className="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600">
+                  <div className="flex items-center gap-1">
+                    <Crown className="h-3 w-3" />
+                    Premium Active
+                  </div>
+                </Badge>
               ) : (
                 <Badge variant={hasReachedLimit ? "destructive" : "secondary"} className="px-3 py-1">
                   {hasReachedLimit ? (
@@ -203,16 +188,8 @@ function HomeContent() {
                   <CheckCircle className="h-8 w-8 text-green-600" />
                   <div className="text-center">
                     <h3 className="text-xl font-bold text-green-800 dark:text-green-400">Premium Active!</h3>
-                    <p className="text-green-700 dark:text-green-300">
-                      {paymentType === "one-time" ? "Lifetime access unlocked" : "Enjoy unlimited background removals"}
-                    </p>
+                    <p className="text-green-700 dark:text-green-300">Enjoy unlimited background removals</p>
                   </div>
-                  {paymentType === "subscription" && (
-                    <Button variant="outline" size="sm" onClick={() => router.push("/account")} className="ml-4">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Manage
-                    </Button>
-                  )}
                 </div>
               </CardContent>
             </Card>
