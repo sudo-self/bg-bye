@@ -9,33 +9,46 @@ interface UsageContextType {
   hasReachedLimit: boolean
   isPremium: boolean
   isCheckingPremium: boolean
-  paymentType: "subscription" | "one-time" | null
+  paymentType: "subscription" | "one-time" | "budget" | null
+  paidUsesRemaining: number
   useFreeTrial: () => void
+  usePaidCredit: () => void
   resetUsage: () => void
   checkSubscriptionStatus: (sessionId: string) => Promise<void>
-  setPremiumStatus: (status: boolean, paymentType?: "subscription" | "one-time") => void
+  setPremiumStatus: (status: boolean, paymentType?: "subscription" | "one-time" | "budget") => void
+  addPaidCredits: (amount: number) => void
 }
 
 const UsageContext = createContext<UsageContextType | undefined>(undefined)
 
 export function UsageProvider({ children }: { children: React.ReactNode }) {
   const [freeUsesRemaining, setFreeUsesRemaining] = useState(1)
+  const [paidUsesRemaining, setPaidUsesRemaining] = useState(0)
   const [isPremium, setIsPremium] = useState(false)
   const [isCheckingPremium, setIsCheckingPremium] = useState(false)
-  const [paymentType, setPaymentType] = useState<"subscription" | "one-time" | null>(null)
+  const [paymentType, setPaymentType] = useState<"subscription" | "one-time" | "budget" | null>(null)
 
   // Load usage from localStorage on mount
   useEffect(() => {
     const savedUsage = localStorage.getItem("bg-removal-usage")
+    const savedPaidUsage = localStorage.getItem("bg-removal-paid-usage")
     const savedPremium = localStorage.getItem("bg-removal-premium")
-    const savedSubscriptionId = localStorage.getItem("bg-removal-subscription-id")
+    const savedPaymentType = localStorage.getItem("bg-removal-payment-type")
 
     if (savedUsage) {
       setFreeUsesRemaining(Number.parseInt(savedUsage, 10))
     }
 
+    if (savedPaidUsage) {
+      setPaidUsesRemaining(Number.parseInt(savedPaidUsage, 10))
+    }
+
     if (savedPremium === "true") {
       setIsPremium(true)
+    }
+
+    if (savedPaymentType) {
+      setPaymentType(savedPaymentType as "subscription" | "one-time" | "budget")
     }
 
     // Check for pending subscription verification
@@ -50,27 +63,45 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("bg-removal-usage", freeUsesRemaining.toString())
   }, [freeUsesRemaining])
 
+  useEffect(() => {
+    localStorage.setItem("bg-removal-paid-usage", paidUsesRemaining.toString())
+  }, [paidUsesRemaining])
+
   // Save premium status to localStorage
   useEffect(() => {
     localStorage.setItem("bg-removal-premium", isPremium.toString())
   }, [isPremium])
 
   const useFreeTrial = () => {
-    if (freeUsesRemaining > 0 && !isPremium) {
+    if (freeUsesRemaining > 0 && !isPremium && paidUsesRemaining === 0) {
       const newCount = freeUsesRemaining - 1
       setFreeUsesRemaining(newCount)
     }
   }
 
-  const resetUsage = () => {
-    setFreeUsesRemaining(1)
-    localStorage.removeItem("bg-removal-usage")
+  const usePaidCredit = () => {
+    if (paidUsesRemaining > 0 && !isPremium) {
+      const newCount = paidUsesRemaining - 1
+      setPaidUsesRemaining(newCount)
+    }
   }
 
-  const setPremiumStatus = (status: boolean, type?: "subscription" | "one-time") => {
+  const addPaidCredits = (amount: number) => {
+    setPaidUsesRemaining((prev) => prev + amount)
+  }
+
+  const resetUsage = () => {
+    setFreeUsesRemaining(1)
+    setPaidUsesRemaining(0)
+    localStorage.removeItem("bg-removal-usage")
+    localStorage.removeItem("bg-removal-paid-usage")
+  }
+
+  const setPremiumStatus = (status: boolean, type?: "subscription" | "one-time" | "budget") => {
     setIsPremium(status)
     if (type) {
       setPaymentType(type)
+      localStorage.setItem("bg-removal-payment-type", type)
     }
     if (status) {
       localStorage.removeItem("bg-removal-pending-session")
@@ -113,7 +144,7 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const hasReachedLimit = freeUsesRemaining <= 0 && !isPremium
+  const hasReachedLimit = freeUsesRemaining <= 0 && paidUsesRemaining <= 0 && !isPremium
 
   return (
     <UsageContext.Provider
@@ -123,10 +154,13 @@ export function UsageProvider({ children }: { children: React.ReactNode }) {
         isPremium,
         isCheckingPremium,
         paymentType,
+        paidUsesRemaining,
         useFreeTrial,
+        usePaidCredit,
         resetUsage,
         checkSubscriptionStatus,
         setPremiumStatus,
+        addPaidCredits,
       }}
     >
       {children}

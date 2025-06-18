@@ -8,7 +8,7 @@ import { TextInput } from "@/components/text-input"
 import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoonIcon, SunIcon, Crown, Zap, Lock, CheckCircle } from "lucide-react"
+import { MoonIcon, SunIcon, Crown, Zap, Lock, CheckCircle, Star } from "lucide-react"
 import { useTheme } from "next-themes"
 import { UsageProvider, useUsage } from "@/components/usage-context"
 import { useEffect } from "react"
@@ -101,78 +101,145 @@ function HomeContent() {
                       hasReachedLimit ? "from-red-600 to-pink-600" : "from-purple-600 to-pink-600"
                     }`}
                   >
-                    {hasReachedLimit ? "Upgrade Required!" : "Go Premium"}
+                    {hasReachedLimit ? "Choose Your Plan!" : "Unlock Premium Features"}
                   </CardTitle>
                   <Crown className="h-6 w-6 text-purple-600" />
                 </div>
                 <CardDescription className="text-lg">
                   {hasReachedLimit
-                    ? "You've used your free removal. Upgrade for unlimited access!"
-                    : "Unlock unlimited background removals with our premium subscription"}
+                    ? "You've used your free removal. Choose a plan to continue!"
+                    : "Select the perfect plan for your background removal needs"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6 items-center">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Zap className="h-5 w-5 text-green-500" />
-                      <span className="text-slate-700 dark:text-slate-300">Unlimited background removals</span>
+                <div className="grid md:grid-cols-3 gap-4 items-stretch">
+                  {/* Budget Option - $0.99 */}
+                  <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800 relative">
+                    <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-blue-600 text-white">
+                        <Star className="h-3 w-3 mr-1" />
+                        Most Popular
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Zap className="h-5 w-5 text-green-500" />
-                      <span className="text-slate-700 dark:text-slate-300">High-resolution downloads</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Zap className="h-5 w-5 text-green-500" />
-                      <span className="text-slate-700 dark:text-slate-300">Priority processing</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Zap className="h-5 w-5 text-green-500" />
-                      <span className="text-slate-700 dark:text-slate-300">No watermarks</span>
+                    <div className="mt-4">
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white">$0.99</div>
+                      <div className="text-slate-600 dark:text-slate-400 mb-3">one-time</div>
+                      <div className="text-sm text-blue-600 dark:text-blue-400 mb-4">Perfect for trying out</div>
+
+                      <div className="space-y-2 mb-4 text-sm">
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                          <Zap className="h-3 w-3 text-green-500" />
+                          <span>10 background removals</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                          <Zap className="h-3 w-3 text-green-500" />
+                          <span>Standard quality</span>
+                        </div>
+                      </div>
+
+                      {/* $0.99 Payment Button */}
+                      <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                        <a
+                          href="https://buy.stripe.com/dRmcN5g3Wbvzeowcazfw401"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Get Started
+                        </a>
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                      {/* Subscription Option */}
-                      <div className="text-center p-4 border rounded-lg bg-white dark:bg-slate-800">
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">$9.99</div>
-                        <div className="text-slate-600 dark:text-slate-400 mb-3">per month</div>
-                        <div className="text-sm text-slate-500 dark:text-slate-400 mb-4">Cancel anytime</div>
+                  {/* Subscription Option */}
+                  <div className="text-center p-4 border rounded-lg bg-white dark:bg-slate-800">
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">$9.99</div>
+                    <div className="text-slate-600 dark:text-slate-400 mb-3">per month</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400 mb-4">Cancel anytime</div>
 
-                        {/* Monthly Subscription Button */}
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: `
-                              <stripe-buy-button
-                                buy-button-id="buy_btn_1RbIgQRiudKubuwQk55KLlvF"
-                                publishable-key="pk_test_51RbIcbRiudKubuwQIR3PQ6vXaU2k7HhxCMX8uExFmo6k2AyqBmZjgp7GkeMAf5HljOAEenHXsQv7PeTxL8yvsNDx00SRPTlkqx"
-                              >
-                              </stripe-buy-button>
-                            `,
-                          }}
-                        />
+                    <div className="space-y-2 mb-4 text-sm">
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                        <Zap className="h-3 w-3 text-green-500" />
+                        <span>Unlimited removals</span>
                       </div>
-
-                      {/* One-time Payment Option */}
-                      <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">$29.99</div>
-                        <div className="text-slate-600 dark:text-slate-400 mb-3">one-time</div>
-                        <div className="text-sm text-purple-600 dark:text-purple-400 mb-4">Lifetime access</div>
-
-                        {/* One-time Payment Button */}
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: `
-                              <stripe-buy-button
-                                buy-button-id="buy_btn_1RbKFoDxlwFi5k13SznJwY0G"
-                                publishable-key="pk_live_51RDFFrDxlwFi5k13I6H0uxEeUV4cOMgOF5Kx2tOYG7a1F7Egidw3vSRwLFgqIkYwiShbiuwJ6U8QmlC1Rkj8RQeEO00hftg2cXH"
-                              >
-                              </stripe-buy-button>
-                            `,
-                          }}
-                        />
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                        <Zap className="h-3 w-3 text-green-500" />
+                        <span>High resolution</span>
                       </div>
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                        <Zap className="h-3 w-3 text-green-500" />
+                        <span>Priority processing</span>
+                      </div>
+                    </div>
+
+                    {/* Monthly Subscription Button */}
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: `
+                          <stripe-buy-button
+                            buy-button-id="buy_btn_1RbIgQRiudKubuwQk55KLlvF"
+                            publishable-key="pk_test_51RbIcbRiudKubuwQIR3PQ6vXaU2k7HhxCMX8uExFmo6k2AyqBmZjgp7GkeMAf5HljOAEenHXsQv7PeTxL8yvsNDx00SRPTlkqx"
+                          >
+                          </stripe-buy-button>
+                        `,
+                      }}
+                    />
+                  </div>
+
+                  {/* Lifetime Option */}
+                  <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">$29.99</div>
+                    <div className="text-slate-600 dark:text-slate-400 mb-3">one-time</div>
+                    <div className="text-sm text-purple-600 dark:text-purple-400 mb-4">Best value</div>
+
+                    <div className="space-y-2 mb-4 text-sm">
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                        <Zap className="h-3 w-3 text-green-500" />
+                        <span>Unlimited removals</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                        <Zap className="h-3 w-3 text-green-500" />
+                        <span>High resolution</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                        <Zap className="h-3 w-3 text-green-500" />
+                        <span>Lifetime access</span>
+                      </div>
+                    </div>
+
+                    {/* Lifetime Payment Button */}
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: `
+                          <stripe-buy-button
+                            buy-button-id="buy_btn_1RbKFoDxlwFi5k13SznJwY0G"
+                            publishable-key="pk_live_51RDFFrDxlwFi5k13I6H0uxEeUV4cOMgOF5Kx2tOYG7a1F7Egidw3vSRwLFgqIkYwiShbiuwJ6U8QmlC1Rkj8RQeEO00hftg2cXH"
+                          >
+                          </stripe-buy-button>
+                        `,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Feature Comparison */}
+                <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border">
+                  <h4 className="font-semibold mb-3 text-center">All plans include:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>No watermarks</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>PNG/JPG support</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Instant download</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Secure processing</span>
                     </div>
                   </div>
                 </div>

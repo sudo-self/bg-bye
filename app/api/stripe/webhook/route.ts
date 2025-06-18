@@ -2,32 +2,13 @@ import { headers } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 
-// Check if Stripe secret key is available
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-06-20",
+})
 
-if (!stripeSecretKey) {
-  console.error("STRIPE_SECRET_KEY environment variable is not set")
-}
-
-if (!endpointSecret) {
-  console.error("STRIPE_WEBHOOK_SECRET environment variable is not set")
-}
-
-// Initialize Stripe only if the secret key is available
-const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey, {
-      apiVersion: "2024-06-20",
-    })
-  : null
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 export async function POST(req: NextRequest) {
-  // Return early if Stripe is not configured
-  if (!stripe || !endpointSecret) {
-    console.error("Stripe is not properly configured")
-    return NextResponse.json({ error: "Stripe configuration missing" }, { status: 500 })
-  }
-
   const body = await req.text()
   const sig = headers().get("stripe-signature")!
 

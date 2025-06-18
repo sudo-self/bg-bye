@@ -14,7 +14,7 @@ export function ImageUploader() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [dragActive, setDragActive] = useState(false)
 
-  const { freeUsesRemaining, hasReachedLimit, useFreeTrial } = useUsage()
+  const { freeUsesRemaining, paidUsesRemaining, hasReachedLimit, isPremium, useFreeTrial, usePaidCredit } = useUsage()
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -46,17 +46,24 @@ export function ImageUploader() {
     if (!selectedFile) return
 
     if (hasReachedLimit) {
-      alert("You've reached your free limit. Please upgrade to premium for unlimited removals!")
+      alert("You've reached your limit. Please upgrade to continue!")
       return
     }
 
     setIsProcessing(true)
 
+    // Use appropriate credit type
+    let creditUsed = false
+    if (freeUsesRemaining > 0) {
+      useFreeTrial()
+      creditUsed = true
+    } else if (paidUsesRemaining > 0) {
+      usePaidCredit()
+      creditUsed = true
+    }
+
     // Simulate API call for background removal
     setTimeout(() => {
-      // Use the free trial
-      useFreeTrial()
-
       // For demo purposes, we'll just show the original image
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -76,8 +83,25 @@ export function ImageUploader() {
     }
   }
 
+  const canProcess = freeUsesRemaining > 0 || paidUsesRemaining > 0 || isPremium
+
   return (
     <div className="space-y-6">
+      {/* Usage Status */}
+      {!isPremium && (
+        <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="text-center text-sm">
+              <span className="font-medium">Available uses: </span>
+              {freeUsesRemaining > 0 && <span className="text-green-600">{freeUsesRemaining} free</span>}
+              {freeUsesRemaining > 0 && paidUsesRemaining > 0 && <span className="text-slate-500"> + </span>}
+              {paidUsesRemaining > 0 && <span className="text-blue-600">{paidUsesRemaining} paid</span>}
+              {!canProcess && <span className="text-red-600">No uses remaining</span>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* File Upload Area */}
       <Card
         className={`border-2 border-dashed transition-colors ${
@@ -123,14 +147,14 @@ export function ImageUploader() {
               </div>
               <Button
                 onClick={processImage}
-                disabled={isProcessing || hasReachedLimit}
+                disabled={isProcessing || !canProcess}
                 className={`${
-                  hasReachedLimit
+                  !canProcess
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 }`}
               >
-                {hasReachedLimit ? (
+                {!canProcess ? (
                   <>
                     <Lock className="w-4 h-4 mr-2" />
                     Upgrade Required
