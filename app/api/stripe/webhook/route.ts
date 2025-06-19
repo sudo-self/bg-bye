@@ -49,7 +49,21 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed":
         const session = event.data.object
-        console.log("Checkout session completed:", session.id)
+
+        // Handle different payment modes
+        if (session.mode === "subscription") {
+          console.log("Subscription completed:", session.id)
+          // Handle subscription logic for $3.99/month unlimited plan
+        } else if (session.mode === "payment") {
+          // Check if it's a pay-per-use payment
+          const amount = session.amount_total || 0
+
+          if (amount === 99) {
+            // $0.99 in cents - pay per use
+            console.log("Pay-per-use payment completed:", session.id)
+            // Handle pay-per-use logic - add 1 credit
+          }
+        }
         break
 
       case "customer.subscription.created":

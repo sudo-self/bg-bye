@@ -58,11 +58,7 @@ export default function SuccessPage() {
             )}
           </div>
           <CardTitle className="text-2xl text-green-800 dark:text-green-400">
-            {isPremium
-              ? paymentType === "one-time"
-                ? "Lifetime Access Unlocked!"
-                : "Welcome to Premium!"
-              : "Payment Successful!"}
+            {isPremium ? "Welcome to Premium!" : "Payment Successful!"}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
@@ -70,28 +66,26 @@ export default function SuccessPage() {
             {isPremium ? (
               <>
                 <p className="text-green-700 dark:text-green-300 font-medium">
-                  {paymentType === "one-time"
-                    ? "You now have lifetime access to all premium features!"
-                    : "Your premium subscription is now active!"}
+                  {isPremium
+                    ? "Your premium subscription is now active!"
+                    : "Your payment was successful. You now have additional removal credits!"}
                 </p>
                 <div className="bg-white dark:bg-slate-800 rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                     <CheckCircle className="w-4 h-4 text-green-500" />
-                    Unlimited background removals
+                    {isPremium ? "Unlimited background removals" : "Additional removal credits added"}
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    High-resolution downloads
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    Priority processing
-                  </div>
-                  {paymentType === "one-time" && (
-                    <div className="flex items-center justify-center gap-2 text-sm text-purple-600 dark:text-purple-400 font-medium">
-                      <CheckCircle className="w-4 h-4 text-purple-500" />
-                      Lifetime access - no recurring charges
-                    </div>
+                  {isPremium && (
+                    <>
+                      <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        High-resolution downloads
+                      </div>
+                      <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Priority processing
+                      </div>
+                    </>
                   )}
                 </div>
               </>

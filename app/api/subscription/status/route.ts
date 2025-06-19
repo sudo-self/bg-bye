@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     if (session.payment_status === "paid") {
       if (session.mode === "subscription" && session.subscription) {
-        // Handle subscription
+        // Handle $3.99/month unlimited subscription
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
 
         return NextResponse.json({
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
           paymentType: "subscription",
         })
       } else if (session.mode === "payment") {
-        // Check payment amount to determine type
+        // Handle $0.99 pay-per-use payments
         const amount = session.amount_total || 0
 
         if (amount === 99) {
@@ -59,16 +59,6 @@ export async function POST(req: NextRequest) {
             customerId: session.customer,
             status: "paid",
             paymentType: "pay-per-use",
-            amount: amount,
-          })
-        } else {
-          // One-time lifetime payment
-          return NextResponse.json({
-            isPremium: true,
-            paymentIntentId: session.payment_intent,
-            customerId: session.customer,
-            status: "paid",
-            paymentType: "one-time",
             amount: amount,
           })
         }

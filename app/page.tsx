@@ -112,7 +112,7 @@ function HomeContent() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   {/* Pay Per Use Option */}
                   <div className="text-center p-4 border rounded-lg bg-white dark:bg-slate-800 relative">
                     <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
@@ -156,41 +156,6 @@ function HomeContent() {
                   </div>
 
                   {/* Subscription Option */}
-                  <div className="text-center p-4 border rounded-lg bg-white dark:bg-slate-800">
-                    <div className="text-2xl font-bold text-slate-900 dark:text-white">$9.99</div>
-                    <div className="text-slate-600 dark:text-slate-400 mb-3">per month</div>
-                    <div className="text-sm text-slate-500 dark:text-slate-400 mb-4">Cancel anytime</div>
-
-                    <div className="space-y-2 mb-4 text-sm">
-                      <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
-                        <Zap className="w-3 h-3 text-green-500" />
-                        Unlimited removals
-                      </div>
-                      <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
-                        <Zap className="w-3 h-3 text-green-500" />
-                        Priority processing
-                      </div>
-                      <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
-                        <Zap className="w-3 h-3 text-green-500" />
-                        High-resolution
-                      </div>
-                    </div>
-
-                    {/* Monthly Subscription Button */}
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: `
-                          <stripe-buy-button
-                            buy-button-id="buy_btn_1RbIgQRiudKubuwQk55KLlvF"
-                            publishable-key="pk_test_51RbIcbRiudKubuwQIR3PQ6vXaU2k7HhxCMX8uExFmo6k2AyqBmZjgp7GkeMAf5HljOAEenHXsQv7PeTxL8yvsNDx00SRPTlkqx"
-                          >
-                          </stripe-buy-button>
-                        `,
-                      }}
-                    />
-                  </div>
-
-                  {/* One-time Payment Option */}
                   <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800 relative">
                     <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
                       <Badge
@@ -201,9 +166,9 @@ function HomeContent() {
                       </Badge>
                     </div>
                     <div className="mt-4">
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white">$29.99</div>
-                      <div className="text-slate-600 dark:text-slate-400 mb-3">one-time</div>
-                      <div className="text-sm text-purple-600 dark:text-purple-400 mb-4">Lifetime access</div>
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white">$3.99</div>
+                      <div className="text-slate-600 dark:text-slate-400 mb-3">per month</div>
+                      <div className="text-sm text-purple-600 dark:text-purple-400 mb-4">Cancel anytime</div>
 
                       <div className="space-y-2 mb-4 text-sm">
                         <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
@@ -212,24 +177,24 @@ function HomeContent() {
                         </div>
                         <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
                           <Zap className="w-3 h-3 text-green-500" />
-                          No recurring charges
+                          Priority processing
                         </div>
                         <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
                           <Zap className="w-3 h-3 text-green-500" />
-                          Premium features
+                          High-resolution
                         </div>
                       </div>
 
-                      {/* One-time Payment Button */}
+                      {/* Monthly Subscription Button */}
                       <div
                         dangerouslySetInnerHTML={{
                           __html: `
-                            <stripe-buy-button
-                              buy-button-id="buy_btn_1RbKFoDxlwFi5k13SznJwY0G"
-                              publishable-key="pk_live_51RDFFrDxlwFi5k13I6H0uxEeUV4cOMgOF5Kx2tOYG7a1F7Egidw3vSRwLFgqIkYwiShbiuwJ6U8QmlC1Rkj8RQeEO00hftg2cXH"
-                            >
-                            </stripe-buy-button>
-                          `,
+            <stripe-buy-button
+              buy-button-id="buy_btn_1RbIgQRiudKubuwQk55KLlvF"
+              publishable-key="pk_test_51RbIcbRiudKubuwQIR3PQ6vXaU2k7HhxCMX8uExFmo6k2AyqBmZjgp7GkeMAf5HljOAEenHXsQv7PeTxL8yvsNDx00SRPTlkqx"
+            >
+            </stripe-buy-button>
+          `,
                         }}
                       />
                     </div>
@@ -241,18 +206,14 @@ function HomeContent() {
                   <h4 className="font-semibold text-center mb-3 text-slate-900 dark:text-white">
                     Which plan is right for you?
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="text-center">
                       <div className="font-medium text-blue-600 dark:text-blue-400">Pay Per Use</div>
                       <div className="text-slate-600 dark:text-slate-400">Perfect for occasional use</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-medium text-green-600 dark:text-green-400">Monthly</div>
+                      <div className="font-medium text-purple-600 dark:text-purple-400">Monthly</div>
                       <div className="text-slate-600 dark:text-slate-400">Great for regular users</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-purple-600 dark:text-purple-400">Lifetime</div>
-                      <div className="text-slate-600 dark:text-slate-400">Best for power users</div>
                     </div>
                   </div>
                 </div>
