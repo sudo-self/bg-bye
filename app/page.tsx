@@ -11,11 +11,17 @@ import { Badge } from "@/components/ui/badge"
 import { MoonIcon, SunIcon, Crown, Zap, Lock, CheckCircle, Star } from "lucide-react"
 import { useTheme } from "next-themes"
 import { UsageProvider, useUsage } from "@/components/usage-context"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 function HomeContent() {
   const { theme, setTheme } = useTheme()
   const { freeUsesRemaining, hasReachedLimit, isPremium, isCheckingPremium } = useUsage()
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Listen for Stripe checkout completion
   useEffect(() => {
@@ -32,6 +38,10 @@ function HomeContent() {
     window.addEventListener("message", handleMessage)
     return () => window.removeEventListener("message", handleMessage)
   }, [])
+
+  if (!mounted) {
+    return null
+  }
 
   return (
     <>
@@ -140,7 +150,7 @@ function HomeContent() {
                         </div>
                       </div>
 
-                      {/* Pay Per Use Button - Updated with Live Mode Link */}
+                      {/* Pay Per Use Button */}
                       <Button
                         onClick={() => window.open("https://buy.stripe.com/7sY14n3ha0QV4NW2zZfw403", "_blank")}
                         className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium py-2 px-4 rounded-md transition-all duration-200"
