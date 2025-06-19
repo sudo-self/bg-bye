@@ -140,18 +140,13 @@ function HomeContent() {
                         </div>
                       </div>
 
-                      {/* Pay Per Use Button */}
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: `
-                            <stripe-buy-button
-                              buy-button-id="buy_btn_1RbKfFDxlwFi5k13TjCPChyu"
-                              publishable-key="pk_live_51RDFFrDxlwFi5k13I6H0uxEeUV4cOMgOF5Kx2tOYG7a1F7Egidw3vSRwLFgqIkYwiShiuwJ6U8QmlC1Rkj8RQeEO00hftg2cXH"
-                            >
-                            </stripe-buy-button>
-                          `,
-                        }}
-                      />
+                      {/* Pay Per Use Button - Updated with Live Mode Link */}
+                      <Button
+                        onClick={() => window.open("https://buy.stripe.com/7sY14n3ha0QV4NW2zZfw403", "_blank")}
+                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium py-2 px-4 rounded-md transition-all duration-200"
+                      >
+                        Pay $0.99
+                      </Button>
                     </div>
                   </div>
 
