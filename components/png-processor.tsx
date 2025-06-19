@@ -48,6 +48,7 @@ export function PngProcessor() {
     try {
       const formData = new FormData()
       formData.append("image", selectedFile)
+      formData.append("endpoint", "/png") // Use the /png endpoint for PNG processing
 
       const response = await fetch("/api/remove-background", {
         method: "POST",
@@ -69,6 +70,7 @@ export function PngProcessor() {
         }
       } else {
         setError(result.error || "Failed to process PNG")
+        console.error("Processing failed:", result)
       }
     } catch (err) {
       setError("Network error. Please try again.")
@@ -78,12 +80,30 @@ export function PngProcessor() {
     }
   }
 
-  const downloadProcessedImage = () => {
+  const downloadProcessedImage = async () => {
     if (processedImage) {
-      const link = document.createElement("a")
-      link.href = processedImage
-      link.download = "processed-image.png"
-      link.click()
+      try {
+        // If it's a data URL, download directly
+        if (processedImage.startsWith("data:")) {
+          const link = document.createElement("a")
+          link.href = processedImage
+          link.download = "processed-image.png"
+          link.click()
+        } else {
+          // If it's a URL, fetch and download
+          const response = await fetch(processedImage)
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement("a")
+          link.href = url
+          link.download = "processed-image.png"
+          link.click()
+          window.URL.revokeObjectURL(url)
+        }
+      } catch (err) {
+        console.error("Download failed:", err)
+        setError("Failed to download image")
+      }
     }
   }
 
@@ -185,47 +205,57 @@ export function PngProcessor() {
         </Card>
       )}
 
-      {/* Original Image Preview */}
+      {/* Image Previews */}
       {selectedFile && (
         <Card className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Original PNG</h3>
-            <img
-              src={URL.createObjectURL(selectedFile) || "/placeholder.svg"}
-              alt="Original PNG"
-              className="max-w-full h-auto rounded-lg border border-slate-200 dark:border-slate-700"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Original PNG</h3>
+                <img
+                  src={URL.createObjectURL(selectedFile) || "/placeholder.svg"}
+                  alt="Original PNG"
+                  className="w-full h-48 object-cover rounded-lg border border-slate-200 dark:border-slate-700"
+                />
+              </div>
+
+              {processedImage && (
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Processed PNG</h3>
+                  <div className="relative">
+                    <img
+                      src={processedImage || "/placeholder.svg"}
+                      alt="Processed PNG"
+                      className="w-full h-48 object-cover rounded-lg border border-slate-200 dark:border-slate-700"
+                    />
+                    {/* Checkerboard pattern for transparency */}
+                    <div
+                      className="absolute inset-0 -z-10 rounded-lg"
+                      style={{
+                        backgroundImage: `
+                          linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                          linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                          linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                          linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+                        `,
+                        backgroundSize: "20px 20px",
+                        backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Processed Image */}
+      {/* Download Button */}
       {processedImage && (
         <Card className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <CardContent className="p-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Processed PNG</h3>
-              <div className="relative">
-                <img
-                  src={processedImage || "/placeholder.svg"}
-                  alt="Processed PNG"
-                  className="max-w-full h-auto rounded-lg border border-slate-200 dark:border-slate-700"
-                />
-                {/* Checkerboard pattern for transparency */}
-                <div
-                  className="absolute inset-0 -z-10 rounded-lg"
-                  style={{
-                    backgroundImage: `
-                      linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-                      linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-                      linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
-                      linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
-                    `,
-                    backgroundSize: "20px 20px",
-                    backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
-                  }}
-                />
-              </div>
+            <div className="text-center space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">PNG Processed Successfully!</h3>
               <Button onClick={downloadProcessedImage} className="w-full bg-green-600 hover:bg-green-700 text-white">
                 <Download className="w-4 h-4 mr-2" />
                 Download Processed PNG

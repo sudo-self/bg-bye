@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Upload, Download, Loader2, ImageIcon, Lock, AlertCircle } from "lucide-react"
@@ -16,6 +16,20 @@ export function ImageUploader() {
   const [error, setError] = useState<string | null>(null)
 
   const { freeUsesRemaining, hasReachedLimit, useFreeTrial, isPremium, usePaidCredit, paidCredits } = useUsage()
+
+  // State to track whether to deduct usage
+  const [shouldDeductUsage, setShouldDeductUsage] = useState(false)
+
+  useEffect(() => {
+    if (shouldDeductUsage) {
+      if (freeUsesRemaining > 0) {
+        useFreeTrial()
+      } else if (paidCredits > 0) {
+        usePaidCredit()
+      }
+      setShouldDeductUsage(false) // Reset the flag
+    }
+  }, [shouldDeductUsage, freeUsesRemaining, paidCredits, useFreeTrial, usePaidCredit])
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -58,6 +72,7 @@ export function ImageUploader() {
     try {
       const formData = new FormData()
       formData.append("image", selectedFile)
+      formData.append("endpoint", "/image") // Use the /image endpoint for regular background removal
 
       const response = await fetch("/api/remove-background", {
         method: "POST",
@@ -71,14 +86,11 @@ export function ImageUploader() {
 
         // Deduct usage after successful processing
         if (!isPremium) {
-          if (freeUsesRemaining > 0) {
-            useFreeTrial()
-          } else if (paidCredits > 0) {
-            usePaidCredit()
-          }
+          setShouldDeductUsage(true)
         }
       } else {
         setError(result.error || "Failed to remove background")
+        console.error("Processing failed:", result)
       }
     } catch (err) {
       setError("Network error. Please try again.")
@@ -88,12 +100,30 @@ export function ImageUploader() {
     }
   }
 
-  const downloadImage = () => {
+  const downloadImage = async () => {
     if (processedImage) {
-      const link = document.createElement("a")
-      link.href = processedImage
-      link.download = "bg-removed-image.png"
-      link.click()
+      try {
+        // If it's a data URL, download directly
+        if (processedImage.startsWith("data:")) {
+          const link = document.createElement("a")
+          link.href = processedImage
+          link.download = "bg-removed-image.png"
+          link.click()
+        } else {
+          // If it's a URL, fetch and download
+          const response = await fetch(processedImage)
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement("a")
+          link.href = url
+          link.download = "bg-removed-image.png"
+          link.click()
+          window.URL.revokeObjectURL(url)
+        }
+      } catch (err) {
+        console.error("Download failed:", err)
+        setError("Failed to download image")
+      }
     }
   }
 
@@ -103,7 +133,7 @@ export function ImageUploader() {
     <div className="space-y-6">
       {/* Error Display */}
       {error && (
-        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+        <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
               <AlertCircle className="h-4 w-4" />
@@ -183,14 +213,14 @@ export function ImageUploader() {
                 </Button>
               </div>
 
-              {/* Original Image Preview */}
+              {/* Image Previews */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Original</h4>
                   <img
                     src={URL.createObjectURL(selectedFile) || "/placeholder.svg"}
                     alt="Original"
-                    className="w-full h-48 object-cover rounded-lg border"
+                    className="w-full h-48 object-cover rounded-lg border border-slate-200 dark:border-slate-700"
                   />
                 </div>
 
@@ -201,7 +231,7 @@ export function ImageUploader() {
                       <img
                         src={processedImage || "/placeholder.svg"}
                         alt="Processed"
-                        className="w-full h-48 object-cover rounded-lg border"
+                        className="w-full h-48 object-cover rounded-lg border border-slate-200 dark:border-slate-700"
                         style={{ backgroundColor: "transparent" }}
                       />
                       {/* Checkerboard pattern to show transparency */}
