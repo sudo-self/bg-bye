@@ -185,13 +185,18 @@ function HomeContent() {
                         </div>
                       </div>
 
-                      {/* Monthly Subscription Button - Updated with Live Mode Link */}
-                      <Button
-                        onClick={() => window.open("https://buy.stripe.com/6oU3cv8Bu4370xGdeDfw402", "_blank")}
-                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium py-2 px-4 rounded-md transition-all duration-200"
-                      >
-                        Subscribe Now
-                      </Button>
+                      {/* Monthly Subscription Button */}
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: `
+            <stripe-buy-button
+              buy-button-id="buy_btn_1RbdAgDxlwFi5k137T1c5oi0"
+              publishable-key="pk_live_51RDFFrDxlwFi5k13I6H0uxEeUV4cOMgOF5Kx2tOYG7a1F7Egidw3vSRwLFgqIkYwiShiuwJ6U8QmlC1Rkj8RQeEO00hftg2cXH"
+            >
+            </stripe-buy-button>
+          `,
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
