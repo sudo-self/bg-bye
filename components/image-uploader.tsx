@@ -97,14 +97,8 @@ export function ImageUploader() {
 
       let processedImageUrl = null
 
-      if (result.data && result.data.data && Array.isArray(result.data.data) && result.data.data.length > 0) {
-        const imageArray = result.data.data[0]
-        if (Array.isArray(imageArray) && imageArray.length > 0) {
-          const processedImageData = imageArray[0]
-          if (processedImageData && typeof processedImageData === "object") {
-            processedImageUrl = processedImageData.url || processedImageData.path
-          }
-        }
+      if (result.data?.data?.[0]?.[0]) {
+        processedImageUrl = result.data.data[0][0].url || result.data.data[0][0].path
       }
 
       if (processedImageUrl) {
@@ -114,7 +108,7 @@ export function ImageUploader() {
           description: "Premium Icon Pack Available",
         })
       } else {
-        throw new Error(`Could not find image URL in response. Full response: ${JSON.stringify(result)}`)
+        throw new Error(`Image URL missing in response: ${JSON.stringify(result)}`)
       }
     } catch (error) {
       console.error("Error processing image:", error)
@@ -160,9 +154,7 @@ export function ImageUploader() {
 
   return (
     <div className="space-y-6">
-      <div
-        className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-12 text-center"
-      >
+      <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-12 text-center">
         <input
           type="file"
           id="image-upload"
@@ -262,10 +254,11 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Premium Pack includes original + favicon (32x32) + Apple icon (180x180)
+            Premium Pack includes original + favicon (32x32) + icon (64x64) + Apple icon (180x180)
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-6">
+            {/* Original */}
             <div className="relative aspect-video border rounded overflow-hidden">
               <Image
                 src={outputImage}
@@ -279,6 +272,7 @@ export function ImageUploader() {
               </div>
             </div>
 
+            {/* favicon-32.png */}
             <div className="flex flex-col items-center">
               <div className="relative w-[32px] h-[32px] border rounded overflow-hidden">
                 <Image
@@ -290,9 +284,25 @@ export function ImageUploader() {
                   unoptimized
                 />
               </div>
-              <p className="text-xs mt-2 text-center text-slate-500">favicon-32.png</p>
+              <p className="text-xs mt-2 text-center text-slate-500">Favicon</p>
             </div>
 
+            {/* icon-64.png */}
+            <div className="flex flex-col items-center">
+              <div className="relative w-[64px] h-[64px] border rounded overflow-hidden">
+                <Image
+                  src={outputImage}
+                  alt="Icon 64x64"
+                  width={64}
+                  height={64}
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
+              <p className="text-xs mt-2 text-center text-slate-500">Web App</p>
+            </div>
+
+            {/* apple-touch-icon.png (180x180) */}
             <div className="flex flex-col items-center">
               <div className="relative w-[180px] h-[180px] border rounded overflow-hidden">
                 <Image
@@ -304,7 +314,7 @@ export function ImageUploader() {
                   unoptimized
                 />
               </div>
-              <p className="text-xs mt-2 text-center text-slate-500">apple-touch-icon.png</p>
+              <p className="text-xs mt-2 text-center text-slate-500">Mobile Device</p>
             </div>
           </div>
 
