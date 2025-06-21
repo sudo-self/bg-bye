@@ -114,6 +114,7 @@ export function SocialMediaKitGenerator() {
       img.src = inputPreview
       await new Promise((res) => (img.onload = res))
 
+      // Helper gradients
       const fbGradient = (() => {
         const canvas = document.createElement("canvas")
         const ctx = canvas.getContext("2d")!
@@ -123,9 +124,41 @@ export function SocialMediaKitGenerator() {
         return gradient
       })()
 
+      const twitterGradient = (() => {
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")!
+        const gradient = ctx.createLinearGradient(0, 0, 1500, 500)
+        gradient.addColorStop(0, "#1DA1F2")
+        gradient.addColorStop(1, "#0d8ddb")
+        return gradient
+      })()
+
+      const linkedinGradient = (() => {
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")!
+        const gradient = ctx.createLinearGradient(0, 0, 1584, 396)
+        gradient.addColorStop(0, "#0077B5")
+        gradient.addColorStop(1, "#005983")
+        return gradient
+      })()
+
+      const whatsappGradient = "#25D366"
+      const telegramGradient = "#0088cc"
+      const discordGradient = "#5865F2"
+      const redditGradient = "#FF4500"
+
       const newKit = {
         facebookCover: await resizeImage(img, 820, 312, fbGradient),
-        profilePic: await resizeImage(img, 400, 400),
+        facebookProfile: await resizeImage(img, 180, 180, "#ffffff"),
+        instagramPost: await resizeImage(img, 1080, 1080, "#ffffff"),
+        instagramStory: await resizeImage(img, 1080, 1920, "#ffffff"),
+        twitterHeader: await resizeImage(img, 1500, 500, twitterGradient),
+        twitterProfile: await resizeImage(img, 400, 400, "#1DA1F2"),
+        youtubeThumb: await resizeImage(img, 1280, 720, "#000000"),
+        linkedinBanner: await resizeImage(img, 1584, 396, linkedinGradient),
+        linkedinProfile: await resizeImage(img, 400, 400, "#0077B5"),
+        tiktokProfile: await resizeImage(img, 200, 200, "#000000"),
+        pinterestPin: await resizeImage(img, 1000, 1500, "#ffffff"),
         snapchatBubble: await resizeImage(img, 400, 400, "#FFFC00", (ctx, w, h) => {
           ctx.fillStyle = "white"
           ctx.beginPath()
@@ -139,17 +172,19 @@ export function SocialMediaKitGenerator() {
           ctx.closePath()
           ctx.fill()
         }),
-        instagramPost: await resizeImage(img, 1080, 1080, "#ffffff"),
-        instagramStory: await resizeImage(img, 1080, 1920, "#ffffff"),
-        twitterHeader: await resizeImage(img, 1500, 500, "#1DA1F2"),
-        youtubeThumb: await resizeImage(img, 1280, 720, "#000000"),
-        linkedinBanner: await resizeImage(img, 1584, 396, "#0077B5"),
-        tiktokProfile: await resizeImage(img, 200, 200, "#000000"),
-        pinterestPin: await resizeImage(img, 1000, 1500, "#ffffff"),
-        discordServerIcon: await resizeImage(img, 512, 512, "#5865F2"),
-        whatsappProfile: await resizeImage(img, 192, 192, "#25D366"),
-        telegramProfile: await resizeImage(img, 200, 200, "#0088cc"),
-        redditIcon: await resizeImage(img, 256, 256, "#FF4500"),
+        discordServerIcon: await resizeImage(img, 512, 512, discordGradient),
+        whatsappProfile: await resizeImage(img, 192, 192, whatsappGradient),
+        telegramProfile: await resizeImage(img, 200, 200, telegramGradient),
+        redditIcon: await resizeImage(img, 256, 256, redditGradient),
+        twitchProfile: await resizeImage(img, 256, 256, "#6441a5"),
+        facebookEventCover: await resizeImage(img, 1920, 1080, fbGradient),
+        linkedinPostImage: await resizeImage(img, 1200, 627, linkedinGradient),
+        twitterPostImage: await resizeImage(img, 1200, 675, twitterGradient),
+        youtubeBanner: await resizeImage(img, 2048, 1152, "#FF0000"),
+        tiktokVideoThumb: await resizeImage(img, 1080, 1920, "#000000"),
+        snapchatStory: await resizeImage(img, 1080, 1920, "#FFFC00"),
+        pinterestBoardCover: await resizeImage(img, 222, 150, "#E60023"),
+        whatsappStatus: await resizeImage(img, 1080, 1920, whatsappGradient),
       }
 
       setKitImages(newKit)
@@ -173,7 +208,7 @@ export function SocialMediaKitGenerator() {
 
       const { url } = await response.json()
       if (url) window.location.href = url
-    } catch (err) {
+    } catch {
       toast({ title: "Payment error", description: "Redirect to Stripe failed" })
     } finally {
       setProcessing(false)
@@ -197,7 +232,7 @@ export function SocialMediaKitGenerator() {
       a.click()
       a.remove()
       URL.revokeObjectURL(url)
-    } catch (err) {
+    } catch {
       toast({ title: "Download error", description: "Could not create ZIP file." })
     } finally {
       setProcessing(false)
@@ -218,21 +253,35 @@ export function SocialMediaKitGenerator() {
         {!inputPreview ? (
           <div className="space-y-4">
             <LucideUpload className="mx-auto h-12 w-12 text-slate-400" />
-            <p className="text-sm text-slate-600 dark:text-slate-400">Drag and drop or click to upload</p>
-            <Button onClick={() => document.getElementById("upload-image")?.click()} disabled={processing}>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Drag and drop or click to upload
+            </p>
+            <Button
+              onClick={() => document.getElementById("upload-image")?.click()}
+              disabled={processing}
+            >
               Select Image
             </Button>
           </div>
         ) : (
           <>
             <div className="relative w-full h-48 rounded-lg overflow-hidden border">
-              <NextImage src={inputPreview} alt="Input preview" fill className="object-contain" unoptimized />
+              <NextImage
+                src={inputPreview}
+                alt="Input preview"
+                fill
+                className="object-contain"
+                unoptimized
+              />
             </div>
             <div className="mt-4 flex justify-center gap-4">
               <Button onClick={() => setInputFile(null)} disabled={processing}>
                 Remove Image
               </Button>
-              <Button onClick={() => document.getElementById("upload-image")?.click()} disabled={processing}>
+              <Button
+                onClick={() => document.getElementById("upload-image")?.click()}
+                disabled={processing}
+              >
                 Change Image
               </Button>
             </div>
@@ -269,7 +318,7 @@ export function SocialMediaKitGenerator() {
               Purchase Social Kit
             </Button>
           ) : (
-            <Button onClick={downloadZip} className="mt-6 w-full bg-blue-700 hover:bg-blue-800">
+            <Button onClick={downloadZip} className="mt-6 w-full bg-indigo-700 hover:bg-pink-700">
               <DownloadIcon className="inline-block mr-2" />
               Download Social Kit
             </Button>
