@@ -1,19 +1,23 @@
-"use client"
+"use client";
 
-import { useTheme } from "next-themes"
-import { Suspense } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ImageUploader } from "@/components/image-uploader"
-import { TextInput } from "@/components/text-input"
-import { Button } from "@/components/ui/button"
-import { MoonIcon, SunIcon } from "lucide-react"
-import { SocialMediaKitGenerator } from "@/components/png-processor"
-
-
+import { useTheme } from "next-themes";
+import { Suspense } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ImageUploader } from "@/components/image-uploader";
+import { TextInput } from "@/components/text-input";
+import { Button } from "@/components/ui/button";
+import { MoonIcon, SunIcon } from "lucide-react";
+import { SocialMediaKitGenerator } from "@/components/png-processor";
 
 export default function Home() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
 
   return (
     <main className="min-h-screen p-4 md:p-8 lg:p-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
@@ -21,7 +25,8 @@ export default function Home() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              BG <img src="/wind.svg" alt="Wind icon" className="w-8 h-8" /> Bye Bye
+              BG <img src="/wind.svg" alt="Wind icon" className="w-8 h-8" /> Bye
+              Bye
             </h1>
 
             <p className="text-slate-600 dark:text-slate-400 mt-2">
@@ -30,7 +35,7 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-             bg-bye-bye.vercel.app
+                bg-bye-bye.vercel.app
               </a>
             </p>
           </div>
@@ -40,14 +45,18 @@ export default function Home() {
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="rounded-full"
           >
-            {theme === "dark" ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+            {theme === "dark" ? (
+              <SunIcon className="h-5 w-5" />
+            ) : (
+              <MoonIcon className="h-5 w-5" />
+            )}
           </Button>
         </div>
 
         <Card className="border border-slate-200 dark:border-slate-800 shadow-lg">
           <CardHeader>
             <CardTitle>Background Removal</CardTitle>
-            <CardDescription>Premium Icons Avaliable</CardDescription>
+            <CardDescription>Premium icon packs avaliable</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="image">
@@ -71,7 +80,7 @@ export default function Home() {
 
               <TabsContent value="png" className="space-y-4">
                 <Suspense fallback={<p>Loading PNG processor…</p>}>
-                <SocialMediaKitGenerator />
+                  <SocialMediaKitGenerator />
                 </Suspense>
               </TabsContent>
             </Tabs>
@@ -79,5 +88,5 @@ export default function Home() {
         </Card>
       </div>
     </main>
-  )
+  );
 }
