@@ -270,6 +270,7 @@ export function ImageUploader() {
       {outputImage && (
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Premium Icon Pack Avaliable</p>
           <div className="relative w-full aspect-video overflow-hidden rounded-lg border">
             <Image
               src={outputImage}
@@ -282,11 +283,11 @@ export function ImageUploader() {
 
           {!paid ? (
             <Button
-              className="w-full mt-4 bg-green-600 text-white"
+              className="w-full mt-4 bg-green-700 hover:bg-indigo-600 text-white"
               onClick={handleStripePay}
               disabled={isLoading}
             >
-            Download Premium Icons
+           Purchase Premium Icons
             </Button>
           ) : (
             <Button
@@ -297,14 +298,14 @@ export function ImageUploader() {
                 const url = window.URL.createObjectURL(blob)
                 const link = document.createElement("a")
                 link.href = url
-                link.download = "background-removed.png"
+                link.download = "premium-image.png"
                 document.body.appendChild(link)
                 link.click()
                 document.body.removeChild(link)
                 window.URL.revokeObjectURL(url)
               }}
             >
-              Download PNG
+              Premium Download
             </Button>
           )}
         </Card>
