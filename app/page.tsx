@@ -6,9 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ImageUploader } from "@/components/image-uploader"
 import { TextInput } from "@/components/text-input"
-import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
 import { MoonIcon, SunIcon } from "lucide-react"
+import { SocialMediaKitGenerator } from "@/components/png-processor"
+
+
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
@@ -50,9 +52,9 @@ export default function Home() {
           <CardContent>
             <Tabs defaultValue="image">
               <TabsList className="grid grid-cols-3 mb-8">
-                <TabsTrigger value="image">BG</TabsTrigger>
+                <TabsTrigger value="image">Upload</TabsTrigger>
                 <TabsTrigger value="text">URL</TabsTrigger>
-                <TabsTrigger value="png">PNG</TabsTrigger>
+                <TabsTrigger value="png">SocialMedia</TabsTrigger>
               </TabsList>
 
               <TabsContent value="image" className="space-y-4">
@@ -69,7 +71,7 @@ export default function Home() {
 
               <TabsContent value="png" className="space-y-4">
                 <Suspense fallback={<p>Loading PNG processor…</p>}>
-                  <PngProcessor />
+                <SocialMediaKitGenerator />
                 </Suspense>
               </TabsContent>
             </Tabs>
