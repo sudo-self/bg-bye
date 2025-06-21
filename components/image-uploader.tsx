@@ -95,11 +95,8 @@ export function ImageUploader() {
         throw new Error(result.details || result.error || "Failed to process image")
       }
 
-      let processedImageUrl = null
-
-      if (result.data?.data?.[0]?.[0]) {
-        processedImageUrl = result.data.data[0][0].url || result.data.data[0][0].path
-      }
+      const processedImageUrl =
+        result?.data?.data?.[0]?.[0]?.url || result?.data?.data?.[0]?.[0]?.path
 
       if (processedImageUrl) {
         setOutputImage(processedImageUrl)
@@ -108,7 +105,7 @@ export function ImageUploader() {
           description: "Premium Icon Pack Available",
         })
       } else {
-        throw new Error(`Image URL missing in response: ${JSON.stringify(result)}`)
+        throw new Error(`Could not find image URL in response: ${JSON.stringify(result)}`)
       }
     } catch (error) {
       console.error("Error processing image:", error)
@@ -254,67 +251,41 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Premium Pack includes original + favicon (32x32) + icon (64x64) + Apple icon (180x180)
+            Premium Pack includes original + favicon (32x32) + icon (64x64) + Apple icon (180x180) + icon (512x512)
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-6">
-            {/* Original */}
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 mb-6">
             <div className="relative aspect-video border rounded overflow-hidden">
-              <Image
-                src={outputImage}
-                alt="Original"
-                fill
-                className="object-contain"
-                unoptimized
-              />
-              <div className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-2 py-1 rounded">
-                Original
-              </div>
+              <Image src={outputImage} alt="Original" fill className="object-contain" unoptimized />
+              <div className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-2 py-1 rounded">Original</div>
             </div>
 
-            {/* favicon-32.png */}
             <div className="flex flex-col items-center">
               <div className="relative w-[32px] h-[32px] border rounded overflow-hidden">
-                <Image
-                  src={outputImage}
-                  alt="Favicon 32x32"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                  unoptimized
-                />
+                <Image src={outputImage} alt="Favicon 32x32" width={32} height={32} className="object-contain" unoptimized />
               </div>
-              <p className="text-xs mt-2 text-center text-slate-500">Favicon</p>
+              <p className="text-xs mt-2 text-center text-slate-500">favicon-32.png</p>
             </div>
 
-            {/* icon-64.png */}
             <div className="flex flex-col items-center">
               <div className="relative w-[64px] h-[64px] border rounded overflow-hidden">
-                <Image
-                  src={outputImage}
-                  alt="Icon 64x64"
-                  width={64}
-                  height={64}
-                  className="object-contain"
-                  unoptimized
-                />
+                <Image src={outputImage} alt="Icon 64x64" width={64} height={64} className="object-contain" unoptimized />
               </div>
-              <p className="text-xs mt-2 text-center text-slate-500">Web App</p>
+              <p className="text-xs mt-2 text-center text-slate-500">icon-64.png</p>
             </div>
 
-            {/* apple-touch-icon.png (180x180) */}
             <div className="flex flex-col items-center">
               <div className="relative w-[180px] h-[180px] border rounded overflow-hidden">
-                <Image
-                  src={outputImage}
-                  alt="Apple Icon 180x180"
-                  width={180}
-                  height={180}
-                  className="object-contain"
-                  unoptimized
-                />
+                <Image src={outputImage} alt="Apple Icon 180x180" width={180} height={180} className="object-contain" unoptimized />
               </div>
-              <p className="text-xs mt-2 text-center text-slate-500">Mobile Device</p>
+              <p className="text-xs mt-2 text-center text-slate-500">apple-touch-icon.png</p>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="relative w-[128px] h-[128px] sm:w-[180px] sm:h-[180px] md:w-[200px] md:h-[200px] border rounded overflow-hidden">
+                <Image src={outputImage} alt="Icon 512x512" width={512} height={512} className="object-contain" unoptimized />
+              </div>
+              <p className="text-xs mt-2 text-center text-slate-500">icon-512.png</p>
             </div>
           </div>
 
