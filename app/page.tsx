@@ -1,6 +1,7 @@
 "use client"
 
 import { useTheme } from "next-themes"
+import { Suspense } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ImageUploader } from "@/components/image-uploader"
@@ -8,7 +9,6 @@ import { TextInput } from "@/components/text-input"
 import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
 import { MoonIcon, SunIcon } from "lucide-react"
-
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
@@ -18,9 +18,9 @@ export default function Home() {
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-  BG <img src="/wind.svg" alt="Wind icon" className="w-8 h-8" /> Bye Bye
-</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              BG <img src="/wind.svg" alt="Wind icon" className="w-8 h-8" /> Bye Bye
+            </h1>
 
             <p className="text-slate-600 dark:text-slate-400 mt-2">
               <a
@@ -56,15 +56,21 @@ export default function Home() {
               </TabsList>
 
               <TabsContent value="image" className="space-y-4">
-                <ImageUploader />
+                <Suspense fallback={<p>Loading image uploader…</p>}>
+                  <ImageUploader />
+                </Suspense>
               </TabsContent>
 
               <TabsContent value="text" className="space-y-4">
-                <TextInput />
+                <Suspense fallback={<p>Loading text input…</p>}>
+                  <TextInput />
+                </Suspense>
               </TabsContent>
 
               <TabsContent value="png" className="space-y-4">
-                <PngProcessor />
+                <Suspense fallback={<p>Loading PNG processor…</p>}>
+                  <PngProcessor />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -73,4 +79,3 @@ export default function Home() {
     </main>
   )
 }
-
