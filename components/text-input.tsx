@@ -176,7 +176,7 @@ export function TextInput() {
       <div className="space-y-4">
         <Input
           id="image-url"
-          placeholder="https://your-photo.com/image.jpg"
+          placeholder="https://your-image.jpg"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
           disabled={isLoading}

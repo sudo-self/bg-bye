@@ -77,7 +77,6 @@ export function ImageUploader() {
       })
 
       const result = await response.json()
-
       const processedImageUrl = result?.data?.data?.[0]?.[0]?.url || result?.data?.data?.[0]?.[0]?.path
 
       if (processedImageUrl) {
@@ -141,35 +140,41 @@ export function ImageUploader() {
 
       const zip = new JSZip()
 
-      await Promise.all(
-        sizes.map(async ({ size, name }) => {
-          const res = await fetch(outputImage!)
-          const blob = await res.blob()
-          const bitmap = await createImageBitmap(blob)
-          const canvas = document.createElement("canvas")
-          canvas.width = size
-          canvas.height = size
-          const ctx = canvas.getContext("2d")!
-          ctx.clearRect(0, 0, size, size)
-          ctx.drawImage(bitmap, 0, 0, size, size)
-          const blobOut = await new Promise<Blob>((resolve) => canvas.toBlob(resolve!, "image/png")!)
-          zip.file(name, blobOut)
-        })
-      )
+      // Download the original and prepare canvases
+      const res = await fetch(outputImage!)
+      const blob = await res.blob()
+      const bitmap = await createImageBitmap(blob)
 
+      for (const { size, name } of sizes) {
+        const canvas = document.createElement("canvas")
+        canvas.width = size
+        canvas.height = size
+        const ctx = canvas.getContext("2d")!
+        ctx.clearRect(0, 0, size, size)
+        ctx.drawImage(bitmap, 0, 0, size, size)
+        const blobOut = await new Promise<Blob>((resolve) => canvas.toBlob(resolve!, "image/png")!)
+        zip.file(name, blobOut)
+      }
+
+      // Add SVG
+      const svgMarkup = `
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512">
+  <image href="${outputImage}" width="512" height="512" />
+</svg>`.trim()
+      zip.file("icon.svg", svgMarkup)
+
+      // Add HTML usage reference
       const premiumTxt = `
-<!-- Add the icons inside the html head tag  -->
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-<!-- https://bg-bye-bye.vercel.app/ -->
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
 `.trim()
-
       zip.file("premium.txt", premiumTxt)
 
-      const blob = await zip.generateAsync({ type: "blob" })
-      const url = URL.createObjectURL(blob)
+      const blobZip = await zip.generateAsync({ type: "blob" })
+      const url = URL.createObjectURL(blobZip)
       const a = document.createElement("a")
       a.href = url
       a.download = "premium-pack.zip"
@@ -181,7 +186,7 @@ export function ImageUploader() {
       console.error(err)
       toast({
         title: "ZIP error",
-        description: "Could not create icon ZIP",
+        description: "Could not create ZIP with SVG",
         variant: "destructive",
       })
     } finally {
@@ -281,7 +286,7 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Premium Pack includes 4 New High Quality icons
+            Premium Pack includes 4 HQ icons and 1 SVG
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
@@ -312,7 +317,7 @@ export function ImageUploader() {
             </Button>
           ) : (
             <Button className="w-full mt-4" onClick={downloadZipPack} disabled={isLoading}>
-              Download Premium Pack
+              Download Premium Pack (SVG included)
             </Button>
           )}
         </Card>
