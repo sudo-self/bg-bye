@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react"
 import NextImage from "next/image"
 import JSZip from "jszip"
 import { Upload as LucideUpload, Download as LucideDownload, RefreshCw } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 const Button = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
@@ -73,7 +74,19 @@ export function SocialMediaKitGenerator() {
   const [inputPreview, setInputPreview] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [kitImages, setKitImages] = useState<{ [key: string]: string }>({})
+  const [paid, setPaid] = useState(false)
   const { toast } = useToast()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get("paid") === "true" && kitImages.facebookCover) {
+      setPaid(true)
+      const url = new URL(window.location.href)
+      url.searchParams.delete("paid")
+      router.replace(url.toString(), { scroll: false, shallow: true })
+    }
+  }, [searchParams, kitImages, router])
 
   useEffect(() => {
     if (!inputFile) {
@@ -145,6 +158,28 @@ export function SocialMediaKitGenerator() {
     } catch (err) {
       console.error(err)
       toast({ title: "Processing error", description: (err as Error).message })
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleStripePay = async () => {
+    setProcessing(true)
+    try {
+      const response = await fetch("/api/check-out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: "social-media-kit" }),
+      })
+
+      const { url } = await response.json()
+      if (url) {
+        window.location.href = url
+      } else {
+        throw new Error("No checkout URL returned")
+      }
+    } catch (err) {
+      toast({ title: "Stripe error", description: "Could not redirect to checkout" })
     } finally {
       setProcessing(false)
     }
@@ -239,10 +274,20 @@ export function SocialMediaKitGenerator() {
             ))}
           </div>
 
-          <Button onClick={downloadZip} className="mt-6 w-full bg-blue-700 hover:bg-indigo-700" disabled={processing}>
-            <LucideDownload className="inline-block mr-2" />
-            Download Social Kit
-          </Button>
+          {!paid ? (
+            <Button
+              onClick={handleStripePay}
+              className="mt-6 w-full bg-green-700 hover:bg-indigo-700 text-white"
+              disabled={processing}
+            >
+              Purchase Social Kit
+            </Button>
+          ) : (
+            <Button onClick={downloadZip} className="mt-6 w-full bg-blue-700 hover:bg-indigo-700" disabled={processing}>
+              <LucideDownload className="inline-block mr-2" />
+              Download Social Kit
+            </Button>
+          )}
         </Card>
       )}
     </div>
