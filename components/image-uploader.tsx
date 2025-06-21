@@ -7,6 +7,26 @@ import { UploadIcon, RefreshCwIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
+import JSZip from "jszip"
+import { readAndCompressImage } from "browser-image-resizer"
+
+const resizeConfig = (size: number) => ({
+  quality: 1,
+  maxWidth: size,
+  maxHeight: size,
+  autoRotate: false,
+  debug: false,
+})
+
+function createInstructionsTxt() {
+  return `
+Add these lines to your HTML <head>:
+
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
+`
+}
 
 export function ImageUploader() {
   const [isLoading, setIsLoading] = useState(false)
@@ -19,14 +39,12 @@ export function ImageUploader() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-
   useEffect(() => {
     const savedOutput = localStorage.getItem("outputImage")
     if (savedOutput) {
       setOutputImage(savedOutput)
     }
   }, [])
-
 
   useEffect(() => {
     if (outputImage) {
@@ -36,21 +54,13 @@ export function ImageUploader() {
     }
   }, [outputImage])
 
-
   useEffect(() => {
     if (searchParams.get("paid") === "true" && outputImage) {
       setPaid(true)
 
-
       setTimeout(() => {
-        const downloadLink = document.createElement("a")
-        downloadLink.href = outputImage
-        downloadLink.download = "background-removed.png"
-        document.body.appendChild(downloadLink)
-        downloadLink.click()
-        document.body.removeChild(downloadLink)
+        downloadZipWithIcons().catch(console.error)
 
-     
         const url = new URL(window.location.href)
         url.searchParams.delete("paid")
         router.replace(url.toString(), { scroll: false, shallow: true })
@@ -145,7 +155,6 @@ export function ImageUploader() {
 
       const { url } = await response.json()
       if (url) {
-      
         if (outputImage) {
           localStorage.setItem("outputImage", outputImage)
         }
@@ -158,6 +167,52 @@ export function ImageUploader() {
       toast({
         title: "Payment error",
         description: "There was an error redirecting to payment",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function downloadZipWithIcons() {
+    if (!outputImage) return
+
+    setIsLoading(true)
+
+    try {
+      const response = await fetch(outputImage)
+      const originalBlob = await response.blob()
+
+      // Resize images
+      const appleTouchBlob = await readAndCompressImage(originalBlob, resizeConfig(180))
+      const icon512Blob = await readAndCompressImage(originalBlob, resizeConfig(512))
+      const faviconBlob = await readAndCompressImage(originalBlob, resizeConfig(32))
+
+      const zip = new JSZip()
+      zip.file("apple-touch-icon.png", appleTouchBlob)
+      zip.file("icon-512.png", icon512Blob)
+      zip.file("favicon.png", faviconBlob)
+      zip.file("README.txt", createInstructionsTxt())
+
+      const zipBlob = await zip.generateAsync({ type: "blob" })
+      const zipUrl = URL.createObjectURL(zipBlob)
+      const a = document.createElement("a")
+      a.href = zipUrl
+      a.download = "icons-pack.zip"
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(zipUrl)
+
+      toast({
+        title: "Download Ready",
+        description: "Your icons pack zip has been downloaded",
+      })
+    } catch (error) {
+      console.error("Error creating zip", error)
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       })
     } finally {
@@ -193,7 +248,6 @@ export function ImageUploader() {
           </div>
         ) : (
           <>
-            {/* Background selector */}
             <div className="flex justify-center gap-4 mb-4">
               {(["transparent", "white", "black", "gradient"] as const).map((bg) => (
                 <Button
@@ -208,7 +262,6 @@ export function ImageUploader() {
               ))}
             </div>
 
-            {/* Preview with background */}
             <div
               className="relative w-full aspect-video max-h-[300px] overflow-hidden rounded-lg border"
               style={{
@@ -270,6 +323,8 @@ export function ImageUploader() {
       {outputImage && (
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">Premium Icon Pack includes project icons and setup code</p>
+                       
           <div className="relative w-full aspect-video overflow-hidden rounded-lg border">
             <Image
               src={outputImage}
@@ -282,29 +337,19 @@ export function ImageUploader() {
 
           {!paid ? (
             <Button
-              className="w-full mt-4 bg-blue-600 text-white"
+              className="w-full mt-4 bg-green-600 text-white"
               onClick={handleStripePay}
               disabled={isLoading}
             >
-              Purchase Download $3
+              Premium icon Pack $3
             </Button>
           ) : (
             <Button
               className="w-full mt-4"
-              onClick={async () => {
-                const response = await fetch(outputImage)
-                const blob = await response.blob()
-                const url = window.URL.createObjectURL(blob)
-                const link = document.createElement("a")
-                link.href = url
-                link.download = "background-removed.png"
-                document.body.appendChild(link)
-                link.click()
-                document.body.removeChild(link)
-                window.URL.revokeObjectURL(url)
-              }}
+              onClick={downloadZipWithIcons}
+              disabled={isLoading}
             >
-              Download PNG
+              Download
             </Button>
           )}
         </Card>
@@ -312,3 +357,4 @@ export function ImageUploader() {
     </div>
   )
 }
+
