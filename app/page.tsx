@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ImageUploader } from "@/components/image-uploader"
@@ -18,9 +19,9 @@ export default function Home() {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">BG BYE BYE</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2">
-  <a 
-    href="https://bg-bye-bye.vercel.app" 
-    target="_blank" 
+  <a
+    href="https://bg-bye-bye.vercel.app"
+    target="_blank"
     rel="noopener noreferrer"
   >
    🌬️ bg-bye-bye.vercel.app
