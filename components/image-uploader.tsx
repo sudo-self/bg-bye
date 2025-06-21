@@ -39,13 +39,13 @@ export function ImageUploader() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
+  // Clear outputImage from localStorage and state on page load (reload)
   useEffect(() => {
-    const savedOutput = localStorage.getItem("outputImage")
-    if (savedOutput) {
-      setOutputImage(savedOutput)
-    }
+    localStorage.removeItem("outputImage")
+    setOutputImage(null)
   }, [])
 
+  // Update localStorage when outputImage changes
   useEffect(() => {
     if (outputImage) {
       localStorage.setItem("outputImage", outputImage)
@@ -113,7 +113,12 @@ export function ImageUploader() {
 
       let processedImageUrl = null
 
-      if (result.data && result.data.data && Array.isArray(result.data.data) && result.data.data.length > 0) {
+      if (
+        result.data &&
+        result.data.data &&
+        Array.isArray(result.data.data) &&
+        result.data.data.length > 0
+      ) {
         const imageArray = result.data.data[0]
         if (Array.isArray(imageArray) && imageArray.length > 0) {
           const processedImageData = imageArray[0]
@@ -130,7 +135,9 @@ export function ImageUploader() {
           description: "Your image has been processed with transparent background",
         })
       } else {
-        throw new Error(`Could not find image URL in response. Full response: ${JSON.stringify(result)}`)
+        throw new Error(
+          `Could not find image URL in response. Full response: ${JSON.stringify(result)}`
+        )
       }
     } catch (error) {
       console.error("Error processing image:", error)
@@ -324,7 +331,7 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-slate-600 dark:text-slate-400 mt-2">Premium Icon Pack includes project icons and setup code</p>
-                       
+
           <div className="relative w-full aspect-video overflow-hidden rounded-lg border">
             <Image
               src={outputImage}
