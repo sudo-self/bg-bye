@@ -281,7 +281,7 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Premium Pack includes 4 New High Quality icons
+            Premium includes 4 New High Quality icons
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
