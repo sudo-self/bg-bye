@@ -1,5 +1,6 @@
-"use client";
+"use client"
 
+import { useTheme } from "next-themes"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ImageUploader } from "@/components/image-uploader"
@@ -7,9 +8,7 @@ import { TextInput } from "@/components/text-input"
 import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
 import { MoonIcon, SunIcon } from "lucide-react"
-import { useTheme } from "next-themes"
-import Image from "next/image"
-import windIcon from "./wind.svg"
+import WindIcon from "./wind.svg" // now imported as a React component
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
@@ -20,20 +19,17 @@ export default function Home() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-        BG
-        <Image src={windIcon} alt="Wind icon" width={32} height={32} />
-        Bye Bye
-      </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-2">
-  <a
-    href="https://bg-bye-bye.vercel.app"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-   🌬️ bg-bye-bye.vercel.app
-  </a>
-</p>
-
+              BG <WindIcon className="w-8 h-8" /> Bye Bye
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">
+              <a
+                href="https://bg-bye-bye.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                🌬️ bg-bye-bye.vercel.app
+              </a>
+            </p>
           </div>
           <Button
             variant="ghost"
@@ -76,3 +72,4 @@ export default function Home() {
     </main>
   )
 }
+
