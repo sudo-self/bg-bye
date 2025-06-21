@@ -8,6 +8,8 @@ import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
 import { MoonIcon, SunIcon } from "lucide-react"
 import { useTheme } from "next-themes"
+import Image from "next/image"
+import windIcon from "./wind.svg"
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
@@ -17,7 +19,11 @@ export default function Home() {
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">BG BYE BYE</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        BG
+        <Image src={windIcon} alt="Wind icon" width={32} height={32} />
+        Bye Bye
+      </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2">
   <a
     href="https://bg-bye-bye.vercel.app"
