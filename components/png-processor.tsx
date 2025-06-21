@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react"
 import NextImage from "next/image"
 import JSZip from "jszip"
-import { Upload as LucideUpload, Download as LucideDownload, RefreshCw } from "lucide-react"
+import { Upload as LucideUpload, RefreshCw as RefreshCwIcon, Download as DownloadIcon } from "lucide-react"
+import { useSearchParams, useRouter } from "next/navigation"
 
 const Button = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
@@ -15,10 +16,7 @@ const Button = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
 )
 
 const Card = (props: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    {...props}
-    className={`p-6 rounded shadow-md bg-white dark:bg-gray-800 ${props.className || ""}`}
-  />
+  <div {...props} className={`p-6 rounded shadow-md bg-white dark:bg-gray-800 ${props.className || ""}`} />
 )
 
 const useToast = () => ({
@@ -73,6 +71,10 @@ export function SocialMediaKitGenerator() {
   const [inputPreview, setInputPreview] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [kitImages, setKitImages] = useState<{ [key: string]: string }>({})
+  const [paid, setPaid] = useState(false)
+
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -85,6 +87,16 @@ export function SocialMediaKitGenerator() {
     reader.onload = () => setInputPreview(reader.result as string)
     reader.readAsDataURL(inputFile)
   }, [inputFile])
+
+  useEffect(() => {
+    if (searchParams.get("paid") === "true" && searchParams.get("product") === "social-media-kit") {
+      setPaid(true)
+      const url = new URL(window.location.href)
+      url.searchParams.delete("paid")
+      url.searchParams.delete("product")
+      router.replace(url.toString(), { scroll: false })
+    }
+  }, [searchParams, router])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) setInputFile(e.target.files[0])
@@ -150,15 +162,30 @@ export function SocialMediaKitGenerator() {
     }
   }
 
+  const handleStripePay = async () => {
+    setProcessing(true)
+    try {
+      const response = await fetch("/api/check-out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: "social-media-kit" }),
+      })
+
+      const { url } = await response.json()
+      if (url) window.location.href = url
+    } catch (err) {
+      toast({ title: "Payment error", description: "Redirect to Stripe failed" })
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   const downloadZip = async () => {
-    if (!kitImages.facebookCover) return
     setProcessing(true)
     try {
       const zip = new JSZip()
       Object.entries(kitImages).forEach(([key, base64]) => {
-        zip.file(`${key.replace(/([A-Z])/g, "-$1").toLowerCase().replace(/^-/, "")}.png`, base64.split(",")[1], {
-          base64: true,
-        })
+        zip.file(`${key}.png`, base64.split(",")[1], { base64: true })
       })
 
       const content = await zip.generateAsync({ type: "blob" })
@@ -205,11 +232,9 @@ export function SocialMediaKitGenerator() {
               <Button onClick={() => setInputFile(null)} disabled={processing}>
                 Remove Image
               </Button>
-              <label htmlFor="upload-image">
-                <Button as="span" disabled={processing}>
-                  Change Image
-                </Button>
-              </label>
+              <Button onClick={() => document.getElementById("upload-image")?.click()} disabled={processing}>
+                Change Image
+              </Button>
             </div>
           </>
         )}
@@ -218,7 +243,7 @@ export function SocialMediaKitGenerator() {
       <Button onClick={processKit} disabled={!inputPreview || processing} className="w-full">
         {processing ? (
           <>
-            <RefreshCw className="animate-spin inline-block mr-2" />
+            <RefreshCwIcon className="animate-spin inline-block mr-2" />
             Processing...
           </>
         ) : (
@@ -226,23 +251,29 @@ export function SocialMediaKitGenerator() {
         )}
       </Button>
 
-      {kitImages.facebookCover && (
-        <Card>
-          <div className="space-y-6">
-            {Object.entries(kitImages).map(([label, src]) => (
-              <div key={label}>
-                <h4 className="mb-2 font-medium capitalize">{label.replace(/([A-Z])/g, " $1")}</h4>
-                <div className="rounded-lg overflow-hidden border mx-auto" style={{ width: 160, height: 90 }}>
-                  <img src={src} alt={label} className="w-full h-full object-contain" />
+      {Object.keys(kitImages).length > 0 && (
+        <Card className="mt-6">
+          <div className="space-y-4">
+            {Object.entries(kitImages).map(([key, src]) => (
+              <div key={key}>
+                <h4 className="font-medium">{key}</h4>
+                <div className="w-40 h-24 border rounded overflow-hidden">
+                  <img src={src} alt={key} className="w-full h-full object-contain" />
                 </div>
               </div>
             ))}
           </div>
 
-          <Button onClick={downloadZip} className="mt-6 w-full bg-blue-700 hover:bg-indigo-700" disabled={processing}>
-            <LucideDownload className="inline-block mr-2" />
-            Download Social Kit
-          </Button>
+          {!paid ? (
+            <Button onClick={handleStripePay} className="mt-6 w-full bg-green-600 hover:bg-green-700">
+              Purchase Social Kit
+            </Button>
+          ) : (
+            <Button onClick={downloadZip} className="mt-6 w-full bg-blue-700 hover:bg-blue-800">
+              <DownloadIcon className="inline-block mr-2" />
+              Download Social Kit
+            </Button>
+          )}
         </Card>
       )}
     </div>
