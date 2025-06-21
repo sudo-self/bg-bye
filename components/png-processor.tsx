@@ -2,19 +2,33 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { UploadIcon, RefreshCwIcon, DownloadIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export function PngProcessor() {
   const [isLoading, setIsLoading] = useState(false)
   const [inputImage, setInputImage] = useState<File | null>(null)
   const [inputPreview, setInputPreview] = useState<string | null>(null)
   const [outputFile, setOutputFile] = useState<string | null>(null)
+  const [paid, setPaid] = useState(false)
+
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (searchParams.get("paid") === "true" && outputFile) {
+      setPaid(true)
+      const url = new URL(window.location.href)
+      url.searchParams.delete("paid")
+      router.replace(url.toString(), { scroll: false, shallow: true })
+    }
+  }, [searchParams, outputFile, router])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -26,6 +40,7 @@ export function PngProcessor() {
       }
       reader.readAsDataURL(file)
       setOutputFile(null)
+      setPaid(false)
     }
   }
 
@@ -53,26 +68,15 @@ export function PngProcessor() {
 
       const result = await response.json()
 
-      if (!response.ok) {
-        throw new Error(result.details || result.error || "Failed to process PNG")
-      }
-
-      // Handle the response structure - PNG endpoint returns a file path string
       let processedFileUrl = null
 
       if (result.data && result.data.data) {
-        // The /png endpoint returns a string file path, not an array
         if (typeof result.data.data === "string") {
-          // Convert the file path to a proper URL
           processedFileUrl = `https://sudo-saidso-bar.hf.space/gradio_api/file=${result.data.data}`
-        }
-        // Fallback: check if it's an array with file objects
-        else if (Array.isArray(result.data.data) && result.data.data.length > 0) {
+        } else if (Array.isArray(result.data.data) && result.data.data.length > 0) {
           const firstItem = result.data.data[0]
-          if (firstItem && typeof firstItem === "object" && firstItem.url) {
-            processedFileUrl = firstItem.url
-          } else if (firstItem && typeof firstItem === "object" && firstItem.path) {
-            processedFileUrl = firstItem.path
+          if (firstItem && typeof firstItem === "object") {
+            processedFileUrl = firstItem.url || firstItem.path
           }
         }
       }
@@ -89,15 +93,65 @@ export function PngProcessor() {
       }
     } catch (error) {
       console.error("Error processing PNG:", error)
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
-
       toast({
         title: "PNG processing failed",
-        description: errorMessage,
+        description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleStripePay = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch("/api/check-out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      })
+
+      const { url } = await response.json()
+      if (url) {
+        if (outputFile) {
+          localStorage.setItem("pngOutputFile", outputFile)
+        }
+        window.location.href = url
+      } else {
+        throw new Error("No Stripe URL returned")
+      }
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "Payment error",
+        description: "Redirect to Stripe failed",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(outputFile!)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = "processed-image.png"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Download failed:", error)
+      toast({
+        title: "Download failed",
+        description: "Could not download the image. Please try right-clicking and saving.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -146,6 +200,7 @@ export function PngProcessor() {
                   setInputImage(null)
                   setInputPreview(null)
                   setOutputFile(null)
+                  setPaid(false)
                 }}
                 disabled={isLoading}
               >
@@ -174,10 +229,9 @@ export function PngProcessor() {
         <Card className="p-6 mt-8">
           <h3 className="text-lg font-medium mb-4">PNG File Generated</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-            Your PNG file has been successfully processed and is ready for download.
+            Your PNG file has been successfully processed.
           </p>
 
-          {/* Show preview of the PNG file */}
           <div
             className="relative w-full aspect-video max-h-[300px] overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 mb-4"
             style={{
@@ -186,43 +240,27 @@ export function PngProcessor() {
             }}
           >
             <Image
-              src={outputFile || "/placeholder.svg"}
-              alt="Processed PNG file"
+              src={outputFile}
+              alt="Processed PNG"
               fill
               className="object-contain"
               unoptimized
             />
           </div>
 
-          <Button
-            className="w-full"
-            onClick={async () => {
-              try {
-                const response = await fetch(outputFile)
-                const blob = await response.blob()
-                const url = window.URL.createObjectURL(blob)
-                const link = document.createElement("a")
-                link.href = url
-                link.download = "processed-image.png"
-                document.body.appendChild(link)
-                link.click()
-                document.body.removeChild(link)
-                window.URL.revokeObjectURL(url)
-              } catch (error) {
-                console.error("Download failed:", error)
-                toast({
-                  title: "Download failed",
-                  description: "Could not download the image. Please try right-clicking and saving.",
-                  variant: "destructive",
-                })
-              }
-            }}
-          >
-            <DownloadIcon className="mr-2 h-4 w-4" />
-            Download PNG
-          </Button>
+          {!paid ? (
+            <Button className="w-full bg-green-700 text-white hover:bg-green-600" onClick={handleStripePay}>
+              Purchase Premium Image
+            </Button>
+          ) : (
+            <Button className="w-full" onClick={handleDownload}>
+              <DownloadIcon className="mr-2 h-4 w-4" />
+              Download PNG
+            </Button>
+          )}
         </Card>
       )}
     </div>
   )
 }
+

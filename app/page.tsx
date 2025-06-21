@@ -44,7 +44,7 @@ export default function Home() {
 
         <Card className="border border-slate-200 dark:border-slate-800 shadow-lg">
           <CardHeader>
-            <CardTitle>BG Removal</CardTitle>
+            <CardTitle>Background Removal</CardTitle>
             <CardDescription>Premium Icons Avaliable</CardDescription>
           </CardHeader>
           <CardContent>
