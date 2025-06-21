@@ -1,13 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { UploadIcon, RefreshCwIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
-import { useSearchParams } from "next/navigation"
 
 export function ImageUploader() {
   const [isLoading, setIsLoading] = useState(false)
@@ -15,18 +14,8 @@ export function ImageUploader() {
   const [inputPreview, setInputPreview] = useState<string | null>(null)
   const [outputImage, setOutputImage] = useState<string | null>(null)
   const [paid, setPaid] = useState(false)
+  const [bgOption, setBgOption] = useState<"transparent" | "white" | "black" | "gradient">("transparent")
   const { toast } = useToast()
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    if (searchParams.get("success") === "true") {
-      setPaid(true)
-      toast({
-        title: "Payment successful",
-        description: "You may now download your image.",
-      })
-    }
-  }, [searchParams, toast])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -72,9 +61,14 @@ export function ImageUploader() {
 
       let processedImageUrl = null
 
-      if (result.data?.data?.[0]?.[0]) {
-        const processed = result.data.data[0][0]
-        processedImageUrl = processed?.url || processed?.path
+      if (result.data && result.data.data && Array.isArray(result.data.data) && result.data.data.length > 0) {
+        const imageArray = result.data.data[0]
+        if (Array.isArray(imageArray) && imageArray.length > 0) {
+          const processedImageData = imageArray[0]
+          if (processedImageData && typeof processedImageData === "object") {
+            processedImageUrl = processedImageData.url || processedImageData.path
+          }
+        }
       }
 
       if (processedImageUrl) {
@@ -101,7 +95,7 @@ export function ImageUploader() {
   const handleStripePay = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/check-out/", {
+      const response = await fetch("/api/check-out", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -127,7 +121,9 @@ export function ImageUploader() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-12 text-center">
+      <div
+        className={`flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-12 text-center`}
+      >
         <input
           type="file"
           id="image-upload"
@@ -136,6 +132,7 @@ export function ImageUploader() {
           onChange={handleFileChange}
           disabled={isLoading}
         />
+
         {!inputPreview ? (
           <div className="space-y-4">
             <UploadIcon className="mx-auto h-12 w-12 text-slate-400" />
@@ -149,8 +146,36 @@ export function ImageUploader() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-4 w-full">
-            <div className="relative w-full aspect-video max-h-[300px] overflow-hidden rounded-lg">
+          <>
+            {/* Background selector */}
+            <div className="flex justify-center gap-4 mb-4">
+              {(["transparent", "white", "black", "gradient"] as const).map((bg) => (
+                <Button
+                  key={bg}
+                  variant={bgOption === bg ? "default" : "outline"}
+                  onClick={() => setBgOption(bg)}
+                  disabled={isLoading}
+                  className="capitalize"
+                >
+                  {bg}
+                </Button>
+              ))}
+            </div>
+
+            {/* Preview with background */}
+            <div
+              className="relative w-full aspect-video max-h-[300px] overflow-hidden rounded-lg border"
+              style={{
+                background:
+                  bgOption === "white"
+                    ? "#fff"
+                    : bgOption === "black"
+                    ? "#000"
+                    : bgOption === "gradient"
+                    ? "linear-gradient(135deg, #4ade80, #22d3ee)"
+                    : "transparent",
+              }}
+            >
               <Image
                 src={inputPreview}
                 alt="Preview"
@@ -159,7 +184,8 @@ export function ImageUploader() {
                 unoptimized
               />
             </div>
-            <div className="flex justify-center gap-4">
+
+            <div className="flex justify-center gap-4 mt-4 w-full">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -179,7 +205,7 @@ export function ImageUploader() {
                 Change Image
               </Button>
             </div>
-          </div>
+          </>
         )}
       </div>
 
@@ -211,8 +237,9 @@ export function ImageUploader() {
             <Button
               className="w-full mt-4 bg-blue-600 text-white"
               onClick={handleStripePay}
+              disabled={isLoading}
             >
-              Premium Package
+              Pay to Download
             </Button>
           ) : (
             <Button

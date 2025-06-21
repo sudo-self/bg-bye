@@ -1,15 +1,11 @@
 import Stripe from "stripe"
-import { NextApiRequest, NextApiResponse } from "next"
+import { NextRequest, NextResponse } from "next/server"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-04-10",
 })
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" })
-  }
-
+export async function POST(request: NextRequest) {
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -24,8 +20,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
     })
 
-    res.status(200).json({ url: session.url })
+    return NextResponse.json({ url: session.url })
   } catch (err: any) {
-    res.status(500).json({ error: err.message })
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    )
   }
 }
