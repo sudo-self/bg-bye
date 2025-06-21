@@ -270,7 +270,7 @@ export function ImageUploader() {
       {outputImage && (
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Premium Icon Pack Avaliable</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Premium Pack: x1 original plus x3 premium icons</p>
           <div className="relative w-full aspect-video overflow-hidden rounded-lg border">
             <Image
               src={outputImage}
