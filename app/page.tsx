@@ -44,8 +44,8 @@ export default function Home() {
 
         <Card className="border border-slate-200 dark:border-slate-800 shadow-lg">
           <CardHeader>
-            <CardTitle>Background Removal</CardTitle>
-            <CardDescription>Upload an image bye bye background</CardDescription>
+            <CardTitle>BG Removal</CardTitle>
+            <CardDescription>Premium Icons Avaliable</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="image">

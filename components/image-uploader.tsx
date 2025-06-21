@@ -117,7 +117,7 @@ export function ImageUploader() {
         setOutputImage(processedImageUrl)
         toast({
           title: "Background Removed!",
-          description: "Your image has been processed with transparent background",
+          description: "Premium Icon Pack Avaliable",
         })
       } else {
         throw new Error(`Could not find image URL in response. Full response: ${JSON.stringify(result)}`)
@@ -249,7 +249,7 @@ export function ImageUploader() {
                 onClick={() => document.getElementById("image-upload")?.click()}
                 disabled={isLoading}
               >
-                Change Image
+                Replace
               </Button>
             </div>
           </>
@@ -282,11 +282,11 @@ export function ImageUploader() {
 
           {!paid ? (
             <Button
-              className="w-full mt-4 bg-blue-600 text-white"
+              className="w-full mt-4 bg-green-600 text-white"
               onClick={handleStripePay}
               disabled={isLoading}
             >
-              Purchase Download $3
+            Download Premium Icons
             </Button>
           ) : (
             <Button
