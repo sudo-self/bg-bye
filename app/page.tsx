@@ -1,8 +1,8 @@
 "use client"
 
 import { useTheme } from "next-themes"
-import { Suspense } from "react"
 import dynamic from "next/dynamic"
+import { Suspense } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Card,
@@ -11,13 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { ImageUploader } from "@/components/image-uploader"
-import { TextInput } from "@/components/text-input"
-import { PngProcessor } from "@/components/png-processor"
 import { Button } from "@/components/ui/button"
 import { MoonIcon, SunIcon } from "lucide-react"
 
 const WindModel = dynamic(() => import("@/components/WindModel"), { ssr: false })
+const ImageUploader = dynamic(() => import("@/components/image-uploader"), { ssr: false })
+const TextInput = dynamic(() => import("@/components/text-input"), { ssr: false })
+const PngProcessor = dynamic(() => import("@/components/png-processor"), { ssr: false })
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
@@ -30,7 +30,7 @@ export default function Home() {
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               BG 🌬️
               <div className="w-16 h-16 pointer-events-none select-none">
-                <Suspense fallback={null}>
+                <Suspense fallback={<div className="w-16 h-16 bg-gray-200 animate-pulse rounded" />}>
                   <WindModel />
                 </Suspense>
               </div>
