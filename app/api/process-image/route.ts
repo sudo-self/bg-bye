@@ -13,13 +13,24 @@ export async function POST(request: NextRequest) {
     // Dynamic import to avoid build issues
     const { Client } = await import("@gradio/client")
 
-    // Connect to the Gradio client
-    const client = await Client.connect("sudo-saidso/bar")
+    // ✅ Use your API key from the environment
+    const apiKey = process.env.GRADIO_API_KEY
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Gradio API key not found in environment" },
+        { status: 500 }
+      )
+    }
+
+    // Connect with auth
+    const client = await Client.connect("sudo-saidso/bar", {
+      auth: apiKey,
+    })
 
     let result
     if (endpoint === "/image") {
       result = await client.predict("/image", {
-        image: image,
+        image,
       })
     } else if (endpoint === "/png") {
       result = await client.predict("/png", {
@@ -37,7 +48,8 @@ export async function POST(request: NextRequest) {
         details: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
+
