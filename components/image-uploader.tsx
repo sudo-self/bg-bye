@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import { UploadIcon, RefreshCwIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
+import JSZip from "jszip"
 import { useSearchParams, useRouter } from "next/navigation"
 
 export function ImageUploader() {
@@ -21,9 +22,7 @@ export function ImageUploader() {
 
   useEffect(() => {
     const savedOutput = localStorage.getItem("outputImage")
-    if (savedOutput) {
-      setOutputImage(savedOutput)
-    }
+    if (savedOutput) setOutputImage(savedOutput)
   }, [])
 
   useEffect(() => {
@@ -37,18 +36,9 @@ export function ImageUploader() {
   useEffect(() => {
     if (searchParams.get("paid") === "true" && outputImage) {
       setPaid(true)
-      setTimeout(() => {
-        const downloadLink = document.createElement("a")
-        downloadLink.href = outputImage
-        downloadLink.download = "background-removed.png"
-        document.body.appendChild(downloadLink)
-        downloadLink.click()
-        document.body.removeChild(downloadLink)
-
-        const url = new URL(window.location.href)
-        url.searchParams.delete("paid")
-        router.replace(url.toString(), { scroll: false, shallow: true })
-      }, 500)
+      const url = new URL(window.location.href)
+      url.searchParams.delete("paid")
+      router.replace(url.toString(), { scroll: false, shallow: true })
     }
   }, [searchParams, outputImage, router])
 
@@ -57,9 +47,7 @@ export function ImageUploader() {
     if (file) {
       setInputImage(file)
       const reader = new FileReader()
-      reader.onload = () => {
-        setInputPreview(reader.result as string)
-      }
+      reader.onload = () => setInputPreview(reader.result as string)
       reader.readAsDataURL(file)
       setOutputImage(null)
       setPaid(false)
@@ -78,7 +66,6 @@ export function ImageUploader() {
     }
 
     setIsLoading(true)
-
     try {
       const formData = new FormData()
       formData.append("image", inputImage)
@@ -91,27 +78,19 @@ export function ImageUploader() {
 
       const result = await response.json()
 
-      if (!response.ok) {
-        throw new Error(result.details || result.error || "Failed to process image")
-      }
-
-      const processedImageUrl =
-        result?.data?.data?.[0]?.[0]?.url || result?.data?.data?.[0]?.[0]?.path
+      const processedImageUrl = result?.data?.data?.[0]?.[0]?.url || result?.data?.data?.[0]?.[0]?.path
 
       if (processedImageUrl) {
         setOutputImage(processedImageUrl)
-        toast({
-          title: "Background Removed!",
-          description: "Premium Icon Pack Available",
-        })
+        toast({ title: "Background Removed!", description: "Premium Icon Pack Available" })
       } else {
-        throw new Error(`Could not find image URL in response: ${JSON.stringify(result)}`)
+        throw new Error(`No URL in response: ${JSON.stringify(result)}`)
       }
-    } catch (error) {
-      console.error("Error processing image:", error)
+    } catch (err) {
+      console.error(err)
       toast({
-        title: "Background removal failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
+        title: "Processing failed",
+        description: err instanceof Error ? err.message : "Unknown error",
         variant: "destructive",
       })
     } finally {
@@ -135,13 +114,73 @@ export function ImageUploader() {
         }
         window.location.href = url
       } else {
-        throw new Error("Stripe checkout URL not received")
+        throw new Error("No Stripe URL returned")
       }
     } catch (err) {
-      console.error("Stripe error", err)
       toast({
         title: "Payment error",
-        description: "There was an error redirecting to payment",
+        description: "Redirect to Stripe failed",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const downloadZipPack = async () => {
+    if (!outputImage) return
+
+    setIsLoading(true)
+    try {
+      const sizes = [
+        { size: 32, name: "favicon-32.png" },
+        { size: 64, name: "icon-64.png" },
+        { size: 180, name: "apple-touch-icon.png" },
+        { size: 512, name: "icon-512.png" },
+      ]
+
+      const zip = new JSZip()
+
+      await Promise.all(
+        sizes.map(async ({ size, name }) => {
+          const res = await fetch(outputImage!)
+          const blob = await res.blob()
+          const bitmap = await createImageBitmap(blob)
+          const canvas = document.createElement("canvas")
+          canvas.width = size
+          canvas.height = size
+          const ctx = canvas.getContext("2d")!
+          ctx.clearRect(0, 0, size, size)
+          ctx.drawImage(bitmap, 0, 0, size, size)
+          const blobOut = await new Promise<Blob>((resolve) => canvas.toBlob(resolve!, "image/png")!)
+          zip.file(name, blobOut)
+        })
+      )
+
+      const premiumTxt = `
+<!-- Add the icons inside the head tag html -->
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+`.trim()
+
+      zip.file("premium.txt", premiumTxt)
+
+      const blob = await zip.generateAsync({ type: "blob" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "premium-pack.zip"
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "ZIP error",
+        description: "Could not create icon ZIP",
         variant: "destructive",
       })
     } finally {
@@ -160,7 +199,6 @@ export function ImageUploader() {
           onChange={handleFileChange}
           disabled={isLoading}
         />
-
         {!inputPreview ? (
           <div className="space-y-4">
             <UploadIcon className="mx-auto h-12 w-12 text-slate-400" />
@@ -202,13 +240,7 @@ export function ImageUploader() {
                     : "transparent",
               }}
             >
-              <Image
-                src={inputPreview}
-                alt="Preview"
-                fill
-                className="object-contain"
-                unoptimized
-              />
+              <Image src={inputPreview} alt="Preview" fill className="object-contain" unoptimized />
             </div>
 
             <div className="flex justify-center gap-4 mt-4 w-full">
@@ -225,10 +257,7 @@ export function ImageUploader() {
               >
                 Remove
               </Button>
-              <Button
-                onClick={() => document.getElementById("image-upload")?.click()}
-                disabled={isLoading}
-              >
+              <Button onClick={() => document.getElementById("image-upload")?.click()} disabled={isLoading}>
                 Replace
               </Button>
             </div>
@@ -251,42 +280,25 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Premium Pack includes original + favicon (32x32) + icon (64x64) + Apple icon (180x180) + icon (512x512)
+            Premium Pack includes 4 new icons: Favicon, Website, Mobile, and Social Media
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 mb-6">
-            <div className="relative aspect-video border rounded overflow-hidden">
-              <Image src={outputImage} alt="Original" fill className="object-contain" unoptimized />
-              <div className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-2 py-1 rounded">Original</div>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <div className="relative w-[32px] h-[32px] border rounded overflow-hidden">
-                <Image src={outputImage} alt="Favicon 32x32" width={32} height={32} className="object-contain" unoptimized />
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
+            {[32, 64, 180, 512].map((size) => (
+              <div className="flex flex-col items-center" key={size}>
+                <div className={`relative w-[${size}px] h-[${size}px] border rounded overflow-hidden`}>
+                  <Image
+                    src={outputImage}
+                    alt={`icon-${size}`}
+                    width={size}
+                    height={size}
+                    className="object-contain"
+                    unoptimized
+                  />
+                </div>
+                <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
               </div>
-              <p className="text-xs mt-2 text-center text-slate-500">favicon-32.png</p>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <div className="relative w-[64px] h-[64px] border rounded overflow-hidden">
-                <Image src={outputImage} alt="Icon 64x64" width={64} height={64} className="object-contain" unoptimized />
-              </div>
-              <p className="text-xs mt-2 text-center text-slate-500">icon-64.png</p>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <div className="relative w-[180px] h-[180px] border rounded overflow-hidden">
-                <Image src={outputImage} alt="Apple Icon 180x180" width={180} height={180} className="object-contain" unoptimized />
-              </div>
-              <p className="text-xs mt-2 text-center text-slate-500">apple-touch-icon.png</p>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <div className="relative w-[128px] h-[128px] sm:w-[180px] sm:h-[180px] md:w-[200px] md:h-[200px] border rounded overflow-hidden">
-                <Image src={outputImage} alt="Icon 512x512" width={512} height={512} className="object-contain" unoptimized />
-              </div>
-              <p className="text-xs mt-2 text-center text-slate-500">icon-512.png</p>
-            </div>
+            ))}
           </div>
 
           {!paid ? (
@@ -298,21 +310,7 @@ export function ImageUploader() {
               Purchase Premium Icons
             </Button>
           ) : (
-            <Button
-              className="w-full mt-4"
-              onClick={async () => {
-                const response = await fetch(outputImage)
-                const blob = await response.blob()
-                const url = window.URL.createObjectURL(blob)
-                const link = document.createElement("a")
-                link.href = url
-                link.download = "premium-image.png"
-                document.body.appendChild(link)
-                link.click()
-                document.body.removeChild(link)
-                window.URL.revokeObjectURL(url)
-              }}
-            >
+            <Button className="w-full mt-4" onClick={downloadZipPack} disabled={isLoading}>
               Download Premium Pack
             </Button>
           )}
