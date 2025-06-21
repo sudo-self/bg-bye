@@ -21,7 +21,7 @@ export default function Home() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              BG <img src="/wind.svg" alt="Wind icon" className="w-8 h-8" /> Bye Bye
+              BG <img src="/wind.svg" alt="Wind icon" className="w-8 h-8" /> bye-bye
             </h1>
 
             <p className="text-slate-600 dark:text-slate-400 mt-2">
@@ -47,7 +47,7 @@ export default function Home() {
         <Card className="border border-slate-200 dark:border-slate-800 shadow-lg">
           <CardHeader>
             <CardTitle>Background Removal</CardTitle>
-            <CardDescription>Premium icon packs avaliable</CardDescription>
+            <CardDescription>Creating HQ images</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="image">
