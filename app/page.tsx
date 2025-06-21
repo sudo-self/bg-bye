@@ -54,7 +54,7 @@ export default function Home() {
               <TabsList className="grid grid-cols-3 mb-8">
                 <TabsTrigger value="image">Upload</TabsTrigger>
                 <TabsTrigger value="text">URL</TabsTrigger>
-                <TabsTrigger value="png">SocialMedia</TabsTrigger>
+                <TabsTrigger value="png">Social Kit</TabsTrigger>
               </TabsList>
 
               <TabsContent value="image" className="space-y-4">
