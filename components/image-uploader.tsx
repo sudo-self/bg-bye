@@ -1,12 +1,12 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { UploadIcon, RefreshCwIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export function ImageUploader() {
   const [isLoading, setIsLoading] = useState(false)
@@ -16,6 +16,47 @@ export function ImageUploader() {
   const [paid, setPaid] = useState(false)
   const [bgOption, setBgOption] = useState<"transparent" | "white" | "black" | "gradient">("transparent")
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+
+  useEffect(() => {
+    const savedOutput = localStorage.getItem("outputImage")
+    if (savedOutput) {
+      setOutputImage(savedOutput)
+    }
+  }, [])
+
+
+  useEffect(() => {
+    if (outputImage) {
+      localStorage.setItem("outputImage", outputImage)
+    } else {
+      localStorage.removeItem("outputImage")
+    }
+  }, [outputImage])
+
+
+  useEffect(() => {
+    if (searchParams.get("paid") === "true" && outputImage) {
+      setPaid(true)
+
+
+      setTimeout(() => {
+        const downloadLink = document.createElement("a")
+        downloadLink.href = outputImage
+        downloadLink.download = "background-removed.png"
+        document.body.appendChild(downloadLink)
+        downloadLink.click()
+        document.body.removeChild(downloadLink)
+
+     
+        const url = new URL(window.location.href)
+        url.searchParams.delete("paid")
+        router.replace(url.toString(), { scroll: false, shallow: true })
+      }, 500)
+    }
+  }, [searchParams, outputImage, router])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -28,6 +69,7 @@ export function ImageUploader() {
       reader.readAsDataURL(file)
       setOutputImage(null)
       setPaid(false)
+      localStorage.removeItem("outputImage")
     }
   }
 
@@ -103,6 +145,10 @@ export function ImageUploader() {
 
       const { url } = await response.json()
       if (url) {
+      
+        if (outputImage) {
+          localStorage.setItem("outputImage", outputImage)
+        }
         window.location.href = url
       } else {
         throw new Error("Stripe checkout URL not received")
@@ -193,6 +239,7 @@ export function ImageUploader() {
                   setInputPreview(null)
                   setOutputImage(null)
                   setPaid(false)
+                  localStorage.removeItem("outputImage")
                 }}
                 disabled={isLoading}
               >
@@ -239,7 +286,7 @@ export function ImageUploader() {
               onClick={handleStripePay}
               disabled={isLoading}
             >
-              Pay to Download
+              Purchase Download $3
             </Button>
           ) : (
             <Button

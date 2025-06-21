@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/?paid=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
     })
 
