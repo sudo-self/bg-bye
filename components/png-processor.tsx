@@ -302,7 +302,7 @@ export function SocialMediaKitGenerator() {
 
           <Button onClick={downloadZip} className="mt-6 w-full bg-blue-700 hover:bg-indigo-700" disabled={processing}>
             <DownloadIcon />
-            <span className="ml-2">Download All Images (ZIP)</span>
+            <span className="ml-2">Download Social Kit</span>
           </Button>
         </Card>
       )}
