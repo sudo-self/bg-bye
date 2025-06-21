@@ -10,10 +10,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 })
     }
 
-    // Dynamic import to avoid build issues
     const { Client } = await import("@gradio/client")
 
-    // ✅ Use your API key from the environment
     const apiKey = process.env.GRADIO_API_KEY
     if (!apiKey) {
       return NextResponse.json(
@@ -22,20 +20,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Connect with auth
     const client = await Client.connect("sudo-saidso/bar", {
       auth: apiKey,
     })
 
     let result
     if (endpoint === "/image") {
-      result = await client.predict("/image", {
-        image,
-      })
+      result = await client.predict("/image", { image })
     } else if (endpoint === "/png") {
-      result = await client.predict("/png", {
-        f: image,
-      })
+      result = await client.predict("/png", { f: image })
     } else {
       return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 })
     }
