@@ -158,12 +158,11 @@ export function ImageUploader() {
       )
 
       const premiumTxt = `
-<!-- Add the icons inside the html head tag  -->
+<!-- Add the icons inside the head tag html -->
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-<!-- https://bg-bye-bye.vercel.app/ -->
 `.trim()
 
       zip.file("premium.txt", premiumTxt)
@@ -281,7 +280,7 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Premium includes 4 New High Quality icons
+            Premium Pack includes 4 new high quality icons
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
