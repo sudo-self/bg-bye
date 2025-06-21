@@ -3,39 +3,43 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const image = formData.get("image") as File
+    const image = formData.get("image")
     const endpoint = (formData.get("endpoint") as string) || "/image"
 
-    if (!image) {
-      return NextResponse.json({ error: "No image provided" }, { status: 400 })
+    if (!(image instanceof File)) {
+      return NextResponse.json({ error: "No valid image file provided" }, { status: 400 })
     }
 
-    // Dynamic import to avoid build issues
     const { Client } = await import("@gradio/client")
-
-    // ✅ Use your API key from the environment
     const apiKey = process.env.GRADIO_API_KEY
+
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Gradio API key not found in environment" },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: "Gradio API key missing" }, { status: 500 })
     }
 
-    // Connect with auth
-    const client = await Client.connect("sudo-saidso/bar", {
-      auth: apiKey,
-    })
+    const client = await Client.connect("sudo-saidso/bar", { auth: apiKey })
+
+    // Optional: Wrap in timeout
+    async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Request timed out")), ms)
+        promise
+          .then((res) => {
+            clearTimeout(timer)
+            resolve(res)
+          })
+          .catch((err) => {
+            clearTimeout(timer)
+            reject(err)
+          })
+      })
+    }
 
     let result
     if (endpoint === "/image") {
-      result = await client.predict("/image", {
-        image,
-      })
+      result = await withTimeout(client.predict("/image", { image }), 20000)
     } else if (endpoint === "/png") {
-      result = await client.predict("/png", {
-        f: image,
-      })
+      result = await withTimeout(client.predict("/png", { f: image }), 20000)
     } else {
       return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 })
     }
@@ -52,4 +56,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
