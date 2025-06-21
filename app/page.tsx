@@ -30,7 +30,7 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-            🌬️ bg-bye-bye.vercel.app
+             bg-bye-bye.vercel.app
               </a>
             </p>
           </div>
