@@ -19,14 +19,12 @@ export function ImageUploader() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-
   useEffect(() => {
     const savedOutput = localStorage.getItem("outputImage")
     if (savedOutput) {
       setOutputImage(savedOutput)
     }
   }, [])
-
 
   useEffect(() => {
     if (outputImage) {
@@ -36,12 +34,9 @@ export function ImageUploader() {
     }
   }, [outputImage])
 
-
   useEffect(() => {
     if (searchParams.get("paid") === "true" && outputImage) {
       setPaid(true)
-
-
       setTimeout(() => {
         const downloadLink = document.createElement("a")
         downloadLink.href = outputImage
@@ -50,7 +45,6 @@ export function ImageUploader() {
         downloadLink.click()
         document.body.removeChild(downloadLink)
 
-     
         const url = new URL(window.location.href)
         url.searchParams.delete("paid")
         router.replace(url.toString(), { scroll: false, shallow: true })
@@ -117,7 +111,7 @@ export function ImageUploader() {
         setOutputImage(processedImageUrl)
         toast({
           title: "Background Removed!",
-          description: "Premium Icon Pack Avaliable",
+          description: "Premium Icon Pack Available",
         })
       } else {
         throw new Error(`Could not find image URL in response. Full response: ${JSON.stringify(result)}`)
@@ -145,7 +139,6 @@ export function ImageUploader() {
 
       const { url } = await response.json()
       if (url) {
-      
         if (outputImage) {
           localStorage.setItem("outputImage", outputImage)
         }
@@ -168,7 +161,7 @@ export function ImageUploader() {
   return (
     <div className="space-y-6">
       <div
-        className={`flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-12 text-center`}
+        className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-12 text-center"
       >
         <input
           type="file"
@@ -193,7 +186,6 @@ export function ImageUploader() {
           </div>
         ) : (
           <>
-            {/* Background selector */}
             <div className="flex justify-center gap-4 mb-4">
               {(["transparent", "white", "black", "gradient"] as const).map((bg) => (
                 <Button
@@ -208,7 +200,6 @@ export function ImageUploader() {
               ))}
             </div>
 
-            {/* Preview with background */}
             <div
               className="relative w-full aspect-video max-h-[300px] overflow-hidden rounded-lg border"
               style={{
@@ -270,15 +261,51 @@ export function ImageUploader() {
       {outputImage && (
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Premium Pack: x1 original plus x3 premium icons</p>
-          <div className="relative w-full aspect-video overflow-hidden rounded-lg border">
-            <Image
-              src={outputImage}
-              alt="Processed image"
-              fill
-              className="object-contain"
-              unoptimized
-            />
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Premium Pack includes original + favicon (32x32) + Apple icon (180x180)
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+            <div className="relative aspect-video border rounded overflow-hidden">
+              <Image
+                src={outputImage}
+                alt="Original"
+                fill
+                className="object-contain"
+                unoptimized
+              />
+              <div className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-2 py-1 rounded">
+                Original
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="relative w-[32px] h-[32px] border rounded overflow-hidden">
+                <Image
+                  src={outputImage}
+                  alt="Favicon 32x32"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
+              <p className="text-xs mt-2 text-center text-slate-500">favicon-32.png</p>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="relative w-[180px] h-[180px] border rounded overflow-hidden">
+                <Image
+                  src={outputImage}
+                  alt="Apple Icon 180x180"
+                  width={180}
+                  height={180}
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
+              <p className="text-xs mt-2 text-center text-slate-500">apple-touch-icon.png</p>
+            </div>
           </div>
 
           {!paid ? (
@@ -287,7 +314,7 @@ export function ImageUploader() {
               onClick={handleStripePay}
               disabled={isLoading}
             >
-           Purchase Premium Icons
+              Purchase Premium Icons
             </Button>
           ) : (
             <Button
@@ -305,7 +332,7 @@ export function ImageUploader() {
                 window.URL.revokeObjectURL(url)
               }}
             >
-              Premium Download
+              Download Premium Pack
             </Button>
           )}
         </Card>
