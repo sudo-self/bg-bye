@@ -62,7 +62,7 @@ export default function Home() {
               <TabsList className="grid grid-cols-3 mb-8">
                 <TabsTrigger value="image">add photo</TabsTrigger>
                 <TabsTrigger value="text">image URL</TabsTrigger>
-                <TabsTrigger value="png">social media kit</TabsTrigger>
+                <TabsTrigger value="png">social kit</TabsTrigger>
               </TabsList>
 
               <TabsContent value="image" className="space-y-4">

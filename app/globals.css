@@ -7,7 +7,7 @@ body {
 }
 
 @layer utilities {
-  /* Experimental balanced text wrapping */
+
   .text-balance {
     text-wrap: balance;
   }
@@ -50,7 +50,7 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  /* Dark mode colors override */
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
