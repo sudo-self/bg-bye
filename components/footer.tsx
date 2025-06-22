@@ -6,9 +6,9 @@ export function FixedFooter() {
         href="https://bg-bye-bye.vercel.app"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-gray-600 dark:text-gray-300 hover:underline cursor-pointer"
+        className="text-sm text-gray-600 dark:text-gray-300 hover:underline hover:text-cyan-600 cursor-pointer"
       >
-        bg-bye-bye
+        bg-bye-bye.vercel.app
       </a>
     </footer>
   )

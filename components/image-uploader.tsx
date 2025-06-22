@@ -140,7 +140,6 @@ export function ImageUploader() {
 
       const zip = new JSZip()
 
-      // Download the original and prepare canvases
       const res = await fetch(outputImage!)
       const blob = await res.blob()
       const bitmap = await createImageBitmap(blob)
@@ -156,14 +155,12 @@ export function ImageUploader() {
         zip.file(name, blobOut)
       }
 
-      // Add SVG
       const svgMarkup = `
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512">
   <image href="${outputImage}" width="512" height="512" />
 </svg>`.trim()
       zip.file("icon.svg", svgMarkup)
 
-      // Add HTML usage reference
       const premiumTxt = `
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
@@ -292,15 +289,30 @@ export function ImageUploader() {
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
             {[32, 64, 180, 512].map((size) => (
               <div className="flex flex-col items-center" key={size}>
-                <div className={`relative w-[${size}px] h-[${size}px] border rounded overflow-hidden`}>
-                  <Image
-                    src={outputImage}
-                    alt={`icon-${size}`}
-                    width={size}
-                    height={size}
-                    className="object-contain"
-                    unoptimized
-                  />
+                                               <div
+                                                 className="relative border rounded overflow-hidden"
+                                                 style={{ width: `${size}px`, height: `${size}px` }}
+                                               >
+
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={outputImage}
+                      alt={`icon-${size}`}
+                      width={size}
+                      height={size}
+                      className="object-contain w-full h-full"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <Image
+                        src="/wind.svg"
+                        alt="Watermark"
+                        width={size * 1.0}
+                        height={size * 1.0}
+                        className="opacity-40"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
               </div>
@@ -317,7 +329,7 @@ export function ImageUploader() {
             </Button>
           ) : (
             <Button className="w-full mt-4" onClick={downloadZipPack} disabled={isLoading}>
-              Download Premium Pack (SVG included)
+              Download Premium Pack
             </Button>
           )}
         </Card>
