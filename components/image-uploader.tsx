@@ -258,7 +258,7 @@ export function ImageUploader() {
                 }}
                 disabled={isLoading}
               >
-                Remove
+                Drop 
               </Button>
               <Button onClick={() => document.getElementById("image-upload")?.click()} disabled={isLoading}>
                 Replace
