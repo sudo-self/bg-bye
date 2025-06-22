@@ -62,7 +62,8 @@ export function TextInput() {
 
       const result = await response.json()
 
-      const processedImageUrl = result?.data?.data?.[0]?.[0]?.url || result?.data?.data?.[0]?.[0]?.path
+      const processedImageUrl =
+        result?.data?.data?.[0]?.[0]?.url || result?.data?.data?.[0]?.[0]?.path
 
       if (processedImageUrl) {
         setOutputImage(processedImageUrl)
@@ -136,7 +137,9 @@ export function TextInput() {
           const ctx = canvas.getContext("2d")!
           ctx.clearRect(0, 0, size, size)
           ctx.drawImage(bitmap, 0, 0, size, size)
-          const blobOut = await new Promise<Blob>((resolve) => canvas.toBlob(resolve!, "image/png")!)
+          const blobOut = await new Promise<Blob>((resolve) =>
+            canvas.toBlob(resolve!, "image/png")
+          )
           zip.file(name, blobOut)
         })
       )
@@ -172,13 +175,6 @@ export function TextInput() {
     }
   }
 
-  const previews = [
-    { size: 32, name: "favicon-32.png" },
-    { size: 64, name: "icon-64.png" },
-    { size: 180, name: "apple-touch-icon.png" },
-    { size: 512, name: "icon-512.png" },
-  ]
-
   return (
     <div className="space-y-6 max-w-2xl mx-auto px-4 py-6">
       <div className="space-y-4">
@@ -201,61 +197,65 @@ export function TextInput() {
         </Button>
       </div>
 
-          {outputImage && (
-            <Card className="p-4 mt-8">
-              <h3 className="text-lg font-medium mb-4">Background Removed</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Premium Pack includes 4 HQ icons and 1 SVG
-              </p>
+      {outputImage && (
+        <Card className="p-4 mt-8">
+          <h3 className="text-lg font-medium mb-4">Background Removed</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Premium Purchase includes x4 HQ icons with project setup
+          </p><br />
 
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
-                {[32, 64, 180, 512].map((size) => (
-                  <div className="flex flex-col items-center" key={size}>
-                                                   <div
-                                                     className="relative border rounded overflow-hidden"
-                                                     style={{ width: `${size}px`, height: `${size}px` }}
-                                                   >
-
-                      <div className="relative w-full h-full">
-                        <Image
-                          src={outputImage}
-                          alt={`icon-${size}`}
-                          width={size}
-                          height={size}
-                          className="object-contain w-full h-full"
-                          unoptimized
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <Image
-                            src="/wind.svg"
-                            alt="Watermark"
-                            width={size * 1.0}
-                            height={size * 1.0}
-                            className="opacity-40"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
-                  </div>
-                ))}
-              </div>
-
-              {!paid ? (
-                <Button
-                  className="w-full mt-4 bg-green-700 hover:bg-indigo-600 text-white"
-                  onClick={handleStripePay}
-                  disabled={isLoading}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
+            {[32, 64, 180, 512].map((size) => (
+              <div className="flex flex-col items-center" key={size}>
+                <div
+                  className="relative border rounded overflow-hidden bg-white"
+                  style={{
+                    width: 96,
+                    height: 96,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  Purchase Premium Icons
-                </Button>
-              ) : (
-                <Button className="w-full mt-4" onClick={downloadZipPack} disabled={isLoading}>
-                  Download Premium Pack
-                </Button>
-              )}
-            </Card>
+                  <Image
+                    src={outputImage}
+                    alt={`icon-${size}`}
+                    width={size}
+                    height={size}
+                    className="object-contain max-w-full max-h-full"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Image
+                      src="/wind.svg"
+                      alt="Watermark"
+                      width={48}
+                      height={48}
+                      className="opacity-40"
+                      unoptimized
+                    />
+                  </div>
+                </div>
+                <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
+              </div>
+            ))}
+          </div>
+
+          {!paid ? (
+            <Button
+              className="w-full mt-4 bg-green-700 hover:bg-indigo-600 text-white"
+              onClick={handleStripePay}
+              disabled={isLoading}
+            >
+              Purchase Premium Icons
+            </Button>
+          ) : (
+            <Button className="w-full mt-4" onClick={downloadZipPack} disabled={isLoading}>
+            Download
+            </Button>
           )}
-        </div>
-      )
-    }
+        </Card>
+      )}
+    </div>
+  )
+}

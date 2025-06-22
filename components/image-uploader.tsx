@@ -283,41 +283,50 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Premium Pack includes 4 HQ icons and 1 SVG
-          </p>
+        HQ icon pack includes x4 new icons and x1 SVG
+          </p><br />
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
-            {[32, 64, 180, 512].map((size) => (
-              <div className="flex flex-col items-center" key={size}>
-                                               <div
-                                                 className="relative border rounded overflow-hidden"
-                                                 style={{ width: `${size}px`, height: `${size}px` }}
-                                               >
+                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
+                         {[32, 64, 180, 512].map((size) => (
+                           <div
+                             className="flex flex-col items-center"
+                             key={size}
+                           >
+                             {/* Fixed container size for all previews */}
+                             <div
+                               className="relative border rounded overflow-hidden bg-white"
+                               style={{
+                                 width: 96,
+                                 height: 96,
+                                 display: "flex",
+                                 alignItems: "center",
+                                 justifyContent: "center",
+                               }}
+                             >
+                               <Image
+                                 src={outputImage}
+                                 alt={`icon-${size}`}
+                                 width={size}
+                                 height={size}
+                                 className="object-contain max-w-full max-h-full"
+                                 unoptimized
+                               />
+                               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                 <Image
+                                   src="/wind.svg"
+                                   alt="Watermark"
+                                   width={48}
+                                   height={48}
+                                   className="opacity-40"
+                                   unoptimized
+                                 />
+                               </div>
+                             </div>
+                             <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
+                           </div>
+                         ))}
+                       </div>
 
-                  <div className="relative w-full h-full">
-                    <Image
-                      src={outputImage}
-                      alt={`icon-${size}`}
-                      width={size}
-                      height={size}
-                      className="object-contain w-full h-full"
-                      unoptimized
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <Image
-                        src="/wind.svg"
-                        alt="Watermark"
-                        width={size * 1.0}
-                        height={size * 1.0}
-                        className="opacity-40"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
-              </div>
-            ))}
-          </div>
 
           {!paid ? (
             <Button
