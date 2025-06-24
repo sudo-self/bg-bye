@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import JSZip from "jszip"
 import { useSearchParams, useRouter } from "next/navigation"
+import heic2any from "heic2any"
 
 export function ImageUploader() {
   const [isLoading, setIsLoading] = useState(false)
@@ -42,13 +43,49 @@ export function ImageUploader() {
     }
   }, [searchParams, outputImage, router])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setInputImage(file)
+    if (!file) return
+
+    try {
+      let imageBlob: Blob = file
+
+      // Convert HEIC/HEIF to PNG if needed
+      if (
+        file.type === "image/heic" ||
+        file.name.toLowerCase().endsWith(".heic") ||
+        file.type === "image/heif"
+      ) {
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: "image/png",
+        })
+        imageBlob = convertedBlob as Blob
+      }
+
+      // Create a new File from the blob for consistent handling downstream
+      const newFile = new File([imageBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", {
+        type: "image/png",
+      })
+
+      setInputImage(newFile)
+
       const reader = new FileReader()
       reader.onload = () => setInputPreview(reader.result as string)
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(imageBlob)
+
+      setOutputImage(null)
+      setPaid(false)
+      localStorage.removeItem("outputImage")
+    } catch (err) {
+      console.error("Failed to convert HEIC image:", err)
+      toast({
+        title: "Unsupported file",
+        description: "Please upload PNG, JPG, or HEIC images only.",
+        variant: "destructive",
+      })
+      setInputImage(null)
+      setInputPreview(null)
       setOutputImage(null)
       setPaid(false)
       localStorage.removeItem("outputImage")
@@ -140,7 +177,7 @@ export function ImageUploader() {
 
       const zip = new JSZip()
 
-      const res = await fetch(outputImage!)
+      const res = await fetch(outputImage)
       const blob = await res.blob()
       const bitmap = await createImageBitmap(blob)
 
@@ -198,7 +235,7 @@ export function ImageUploader() {
           type="file"
           id="image-upload"
           className="hidden"
-          accept="image/*"
+          accept="image/*,.heic"
           onChange={handleFileChange}
           disabled={isLoading}
         />
@@ -258,7 +295,7 @@ export function ImageUploader() {
                 }}
                 disabled={isLoading}
               >
-                Drop 
+                Drop
               </Button>
               <Button onClick={() => document.getElementById("image-upload")?.click()} disabled={isLoading}>
                 Replace
@@ -283,50 +320,46 @@ export function ImageUploader() {
         <Card className="p-4 mt-8">
           <h3 className="text-lg font-medium mb-4">Background Removed</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-        HQ icon pack includes x4 new icons and x1 SVG
-          </p><br />
+            HQ icon pack includes x4 new icons and x1 SVG
+          </p>
+          <br />
 
-                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
-                         {[32, 64, 180, 512].map((size) => (
-                           <div
-                             className="flex flex-col items-center"
-                             key={size}
-                           >
-                             {/* Fixed container size for all previews */}
-                             <div
-                               className="relative border rounded overflow-hidden bg-white"
-                               style={{
-                                 width: 96,
-                                 height: 96,
-                                 display: "flex",
-                                 alignItems: "center",
-                                 justifyContent: "center",
-                               }}
-                             >
-                               <Image
-                                 src={outputImage}
-                                 alt={`icon-${size}`}
-                                 width={size}
-                                 height={size}
-                                 className="object-contain max-w-full max-h-full"
-                                 unoptimized
-                               />
-                               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                 <Image
-                                   src="/wind.svg"
-                                   alt="Watermark"
-                                   width={48}
-                                   height={48}
-                                   className="opacity-40"
-                                   unoptimized
-                                 />
-                               </div>
-                             </div>
-                             <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
-                           </div>
-                         ))}
-                       </div>
-
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
+            {[32, 64, 180, 512].map((size) => (
+              <div className="flex flex-col items-center" key={size}>
+                <div
+                  className="relative border rounded overflow-hidden bg-white"
+                  style={{
+                    width: 96,
+                    height: 96,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Image
+                    src={outputImage}
+                    alt={`icon-${size}`}
+                    width={size}
+                    height={size}
+                    className="object-contain max-w-full max-h-full"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Image
+                      src="/wind.svg"
+                      alt="Watermark"
+                      width={48}
+                      height={48}
+                      className="opacity-40"
+                      unoptimized
+                    />
+                  </div>
+                </div>
+                <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
+              </div>
+            ))}
+          </div>
 
           {!paid ? (
             <Button
@@ -346,3 +379,4 @@ export function ImageUploader() {
     </div>
   )
 }
+
