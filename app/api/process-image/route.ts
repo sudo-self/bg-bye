@@ -1,4 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+
+export const runtime = "nodejs" 
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,10 +9,13 @@ export async function POST(request: NextRequest) {
     const endpoint = (formData.get("endpoint") as string) || "/image"
 
     if (!(image instanceof File)) {
-      return NextResponse.json({ error: "No valid image provided" }, { status: 400 })
+      return NextResponse.json(
+        { error: "No valid image provided" },
+        { status: 400 }
+      )
     }
 
-    // Dynamic import (prevents bundling issues with Edge)
+    // Dynamic import to avoid bundling issues
     const { Client } = await import("@gradio/client")
 
     const apiKey = process.env.GRADIO_API_KEY
@@ -21,6 +26,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Connect to Gradio client
     const client = await Client.connect("sudo-saidso/bar", {
       auth: apiKey,
     })
@@ -35,7 +41,10 @@ export async function POST(request: NextRequest) {
         result = await client.predict("/png", { f: image })
         break
       default:
-        return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Invalid endpoint" },
+          { status: 400 }
+        )
     }
 
     return NextResponse.json({ success: true, data: result })
