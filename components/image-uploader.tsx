@@ -44,49 +44,51 @@ export function ImageUploader() {
     }
   }, [searchParams, outputImage, router]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    try {
-      let imageBlob: Blob = file;
+      try {
+        let imageBlob: Blob = file;
 
-      if (
-        file.type === "image/heic" ||
-        file.name.toLowerCase().endsWith(".heic") ||
-        file.type === "image/heif"
-      ) {
+        if (
+          file.type === "image/heic" ||
+          file.name.toLowerCase().endsWith(".heic") ||
+          file.type === "image/heif"
+        ) {
           const heic2any = (await import("heic2any")).default;
           const convertedBlob = await heic2any({ blob: file, toType: "image/png" });
+          imageBlob = convertedBlob as Blob;
+        }
 
+        const newFile = new File([imageBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", {
+          type: "image/png",
+        });
 
-      const newFile = new File([imageBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", {
-        type: "image/png",
-      });
+        setInputImage(newFile);
 
-      setInputImage(newFile);
+        const reader = new FileReader();
+        reader.onload = () => setInputPreview(reader.result as string);
+        reader.readAsDataURL(imageBlob);
 
-      const reader = new FileReader();
-      reader.onload = () => setInputPreview(reader.result as string);
-      reader.readAsDataURL(imageBlob);
+        setOutputImage(null);
+        setPaid(false);
+        localStorage.removeItem("outputImage");
+      } catch (err) {
+        console.error("Failed to convert HEIC image:", err);
+        toast({
+          title: "Unsupported file",
+          description: "Please upload PNG, JPG, or HEIC images only.",
+          variant: "destructive",
+        });
+        setInputImage(null);
+        setInputPreview(null);
+        setOutputImage(null);
+        setPaid(false);
+        localStorage.removeItem("outputImage");
+      }
+    };
 
-      setOutputImage(null);
-      setPaid(false);
-      localStorage.removeItem("outputImage");
-    } catch (err) {
-      console.error("Failed to convert HEIC image:", err);
-      toast({
-        title: "Unsupported file",
-        description: "Please upload PNG, JPG, or HEIC images only.",
-        variant: "destructive",
-      });
-      setInputImage(null);
-      setInputPreview(null);
-      setOutputImage(null);
-      setPaid(false);
-      localStorage.removeItem("outputImage");
-    }
-  };
 
   const applyWatermarkToImage = async (imageUrl: string): Promise<string> => {
     return new Promise((resolve) => {
