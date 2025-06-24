@@ -51,7 +51,6 @@ export function ImageUploader() {
     try {
       let imageBlob: Blob = file;
 
-      // Dynamic import here to avoid SSR issues
       if (
         file.type === "image/heic" ||
         file.name.toLowerCase().endsWith(".heic") ||
@@ -93,6 +92,38 @@ export function ImageUploader() {
     }
   };
 
+  const applyWatermarkToImage = async (imageUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(image, 0, 0);
+
+        const watermark = new Image();
+        watermark.src = "/wind.svg";
+        watermark.crossOrigin = "anonymous";
+        watermark.onload = () => {
+          const wmSize = Math.min(image.width, image.height) * 0.25;
+          ctx.globalAlpha = 0.4;
+          ctx.drawImage(
+            watermark,
+            image.width / 2 - wmSize / 2,
+            image.height / 2 - wmSize / 2,
+            wmSize,
+            wmSize
+          );
+          ctx.globalAlpha = 1.0;
+          resolve(canvas.toDataURL("image/png"));
+        };
+      };
+      image.src = imageUrl;
+    });
+  };
+
   const processImage = async () => {
     if (!inputImage) {
       toast({
@@ -119,7 +150,10 @@ export function ImageUploader() {
         result?.data?.data?.[0]?.[0]?.url || result?.data?.data?.[0]?.[0]?.path;
 
       if (processedImageUrl) {
-        setOutputImage(processedImageUrl);
+        const finalUrl = paid
+          ? processedImageUrl
+          : await applyWatermarkToImage(processedImageUrl);
+        setOutputImage(finalUrl);
         toast({ title: "Background Removed!", description: "Premium Icon Pack Available" });
       } else {
         throw new Error(`No URL in response: ${JSON.stringify(result)}`);
@@ -286,7 +320,13 @@ export function ImageUploader() {
                     : "transparent",
               }}
             >
-              <Image src={inputPreview} alt="Preview" fill className="object-contain" unoptimized />
+              <Image
+                src={inputPreview}
+                alt="Preview"
+                fill
+                className="object-contain"
+                unoptimized
+              />
             </div>
 
             <div className="flex justify-center gap-4 mt-4 w-full">
@@ -351,16 +391,6 @@ export function ImageUploader() {
                     className="object-contain max-w-full max-h-full"
                     unoptimized
                   />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <Image
-                      src="/wind.svg"
-                      alt="Watermark"
-                      width={48}
-                      height={48}
-                      className="opacity-40"
-                      unoptimized
-                    />
-                  </div>
                 </div>
                 <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
               </div>
@@ -385,3 +415,4 @@ export function ImageUploader() {
     </div>
   );
 }
+
