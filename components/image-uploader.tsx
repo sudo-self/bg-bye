@@ -51,13 +51,17 @@ export function ImageUploader() {
     try {
       let imageBlob: Blob = file;
 
+      // Dynamic import here to avoid SSR issues
       if (
         file.type === "image/heic" ||
         file.name.toLowerCase().endsWith(".heic") ||
         file.type === "image/heif"
       ) {
         const heic2any = (await import("heic2any")).default;
-        const convertedBlob = await heic2any({ blob: file, toType: "image/png" });
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: "image/png",
+        });
         imageBlob = convertedBlob as Blob;
       }
 
@@ -89,38 +93,6 @@ export function ImageUploader() {
     }
   };
 
-  const applyWatermarkToImage = async (imageUrl: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const image = new Image();
-      image.crossOrigin = "anonymous";
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = image.width;
-        canvas.height = image.height;
-        const ctx = canvas.getContext("2d")!;
-        ctx.drawImage(image, 0, 0);
-
-        const watermark = new Image();
-        watermark.src = "/wind.svg";
-        watermark.crossOrigin = "anonymous";
-        watermark.onload = () => {
-          const wmSize = Math.min(image.width, image.height) * 0.25;
-          ctx.globalAlpha = 0.4;
-          ctx.drawImage(
-            watermark,
-            image.width / 2 - wmSize / 2,
-            image.height / 2 - wmSize / 2,
-            wmSize,
-            wmSize
-          );
-          ctx.globalAlpha = 1.0;
-          resolve(canvas.toDataURL("image/png"));
-        };
-      };
-      image.src = imageUrl;
-    });
-  };
-
   const processImage = async () => {
     if (!inputImage) {
       toast({
@@ -147,10 +119,7 @@ export function ImageUploader() {
         result?.data?.data?.[0]?.[0]?.url || result?.data?.data?.[0]?.[0]?.path;
 
       if (processedImageUrl) {
-        const finalUrl = paid
-          ? processedImageUrl
-          : await applyWatermarkToImage(processedImageUrl);
-        setOutputImage(finalUrl);
+        setOutputImage(processedImageUrl);
         toast({ title: "Background Removed!", description: "Premium Icon Pack Available" });
       } else {
         throw new Error(`No URL in response: ${JSON.stringify(result)}`);
@@ -262,4 +231,157 @@ export function ImageUploader() {
       setIsLoading(false);
     }
   };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-12 text-center">
+        <input
+          type="file"
+          id="image-upload"
+          className="hidden"
+          accept="image/*,.heic"
+          onChange={handleFileChange}
+          disabled={isLoading}
+        />
+        {!inputPreview ? (
+          <div className="space-y-4">
+            <UploadIcon className="mx-auto h-12 w-12 text-slate-400" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Drag and drop or click to upload
+            </p>
+            <Button
+              variant="secondary"
+              onClick={() => document.getElementById("image-upload")?.click()}
+              disabled={isLoading}
+            >
+              Select Image
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-center gap-4 mb-4">
+              {(["transparent", "white", "black", "gradient"] as const).map((bg) => (
+                <Button
+                  key={bg}
+                  variant={bgOption === bg ? "default" : "outline"}
+                  onClick={() => setBgOption(bg)}
+                  disabled={isLoading}
+                  className="capitalize"
+                >
+                  {bg}
+                </Button>
+              ))}
+            </div>
+
+            <div
+              className="relative w-full aspect-video max-h-[300px] overflow-hidden rounded-lg border"
+              style={{
+                background:
+                  bgOption === "white"
+                    ? "#fff"
+                    : bgOption === "black"
+                    ? "#000"
+                    : bgOption === "gradient"
+                    ? "linear-gradient(135deg, #4ade80, #22d3ee)"
+                    : "transparent",
+              }}
+            >
+              <Image src={inputPreview} alt="Preview" fill className="object-contain" unoptimized />
+            </div>
+
+            <div className="flex justify-center gap-4 mt-4 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setInputImage(null);
+                  setInputPreview(null);
+                  setOutputImage(null);
+                  setPaid(false);
+                  localStorage.removeItem("outputImage");
+                }}
+                disabled={isLoading}
+              >
+                Drop
+              </Button>
+              <Button onClick={() => document.getElementById("image-upload")?.click()} disabled={isLoading}>
+                Replace
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <Button className="w-full" onClick={processImage} disabled={!inputImage || isLoading}>
+        {isLoading ? (
+          <>
+            <RefreshCwIcon className="mr-2 h-4 w-4 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          "Remove Background"
+        )}
+      </Button>
+
+      {outputImage && (
+        <Card className="p-4 mt-8">
+          <h3 className="text-lg font-medium mb-4">Background Removed</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            HQ icon pack includes x4 new icons and x1 SVG
+          </p>
+          <br />
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 mb-6">
+            {[32, 64, 180, 512].map((size) => (
+              <div className="flex flex-col items-center" key={size}>
+                <div
+                  className="relative border rounded overflow-hidden bg-white"
+                  style={{
+                    width: 96,
+                    height: 96,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Image
+                    src={outputImage}
+                    alt={`icon-${size}`}
+                    width={size}
+                    height={size}
+                    className="object-contain max-w-full max-h-full"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Image
+                      src="/wind.svg"
+                      alt="Watermark"
+                      width={48}
+                      height={48}
+                      className="opacity-40"
+                      unoptimized
+                    />
+                  </div>
+                </div>
+                <p className="text-xs mt-2 text-center text-slate-500">{`icon-${size}.png`}</p>
+              </div>
+            ))}
+          </div>
+
+          {!paid ? (
+            <Button
+              className="w-full mt-4 bg-green-700 hover:bg-indigo-600 text-white"
+              onClick={handleStripePay}
+              disabled={isLoading}
+            >
+              Purchase Premium Icons
+            </Button>
+          ) : (
+            <Button className="w-full mt-4" onClick={downloadZipPack} disabled={isLoading}>
+              Download Premium Pack
+            </Button>
+          )}
+        </Card>
+      )}
+    </div>
+  );
 }
