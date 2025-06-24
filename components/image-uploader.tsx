@@ -56,13 +56,9 @@ export function ImageUploader() {
         file.name.toLowerCase().endsWith(".heic") ||
         file.type === "image/heif"
       ) {
-        const heic2any = (await import("heic2any")).default;
-        const convertedBlob = await heic2any({
-          blob: file,
-          toType: "image/png",
-        });
-        imageBlob = convertedBlob as Blob;
-      }
+          const heic2any = (await import("heic2any")).default;
+          const convertedBlob = await heic2any({ blob: file, toType: "image/png" });
+
 
       const newFile = new File([imageBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", {
         type: "image/png",
