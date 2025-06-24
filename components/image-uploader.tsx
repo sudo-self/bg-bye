@@ -57,13 +57,17 @@ export function ImageUploader() {
           file.type === "image/heif"
         ) {
           const heic2any = (await import("heic2any")).default;
-          const convertedBlob = await heic2any({ blob: file, toType: "image/png" });
-          imageBlob = convertedBlob as Blob;
+          const converted = await heic2any({ blob: file, toType: "image/png" });
+          imageBlob = Array.isArray(converted) ? converted[0] : converted;
         }
 
-        const newFile = new File([imageBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", {
-          type: "image/png",
-        });
+        const newFile = new File(
+          [imageBlob],
+          file.name.replace(/\.[^/.]+$/, "") + ".png",
+          {
+            type: "image/png",
+          }
+        );
 
         setInputImage(newFile);
 
@@ -88,6 +92,7 @@ export function ImageUploader() {
         localStorage.removeItem("outputImage");
       }
     };
+
 
 
   const applyWatermarkToImage = async (imageUrl: string): Promise<string> => {
